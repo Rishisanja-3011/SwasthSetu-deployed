@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "fixtureSet": "swasthsetu-synthetic-cbc-v1",
+  "synthetic": true,
+  "publicBasePath": "/demo-reports/",
+  "doctor": { "phone": "+919900000010", "name": "Dr. Demo Mehta", "code": "DOC-DEMO01" },
+  "laboratory": { "phone": "+919900000020", "name": "VaaniDoc Demo Diagnostics", "code": "LAB-DEMO01" },
+  "markers": [
+    { "key": "hemoglobin", "name": "Hemoglobin", "unit": "g/dL", "reference": { "Male": [13, 18], "Female": [12, 16] } },
+    { "key": "rbc", "name": "Total RBC Count", "unit": "mill/cmm", "reference": { "Male": [4.5, 6.5], "Female": [4, 5.5] } },
+    { "key": "hematocrit", "name": "P.C.V", "unit": "%", "reference": { "Male": [42, 52], "Female": [36, 46] } },
+    { "key": "mcv", "name": "M.C.V", "unit": "fL", "reference": [76, 96] },
+    { "key": "mch", "name": "M.C.H", "unit": "pg", "reference": [27, 32] },
+    { "key": "mchc", "name": "M.C.H.C", "unit": "g/dL", "reference": [31.5, 34.5] },
+    { "key": "rdw", "name": "R.D.W", "unit": "%", "reference": [11.6, 14] },
+    { "key": "wbc", "name": "Total WBC Count", "unit": "/cmm", "reference": [4000, 11000] },
+    { "key": "neutrophils", "name": "Neutrophils", "unit": "%", "reference": [40, 75] },
+    { "key": "lymphocytes", "name": "Lymphocytes", "unit": "%", "reference": [20, 45] },
+    { "key": "eosinophils", "name": "Eosinophils", "unit": "%", "reference": [1, 6] },
+    { "key": "monocytes", "name": "Monocytes", "unit": "%", "reference": [2, 10] },
+    { "key": "basophils", "name": "Basophils", "unit": "%", "reference": [0, 1] },
+    { "key": "platelets", "name": "Platelet Count", "unit": "/cmm", "reference": [150000, 400000] }
+  ],
+  "patients": [
+    {
+      "identifier": "PXDEMO001", "name": "Demo Normal Patient", "phone": "+919900000001", "age": 34, "gender": "Male",
+      "report": {
+        "file": "demo-cbc-normal.pdf", "sampleId": "DEMO-CBC-001", "scenario": "normal",
+        "label": "Normal CBC", "description": "Complete synthetic panel; ready for review and publication.",
+        "values": [14.8, 5.1, 45, 88, 29, 33, 13.2, 7200, 60, 30, 3, 6, 1, 250000],
+        "expectedOutcome": { "validationStatus": "VALID", "coverageStatus": "COMPLETE", "testsDetected": 14, "observations": 14, "uploadStatus": "PROCESSING", "publishEligible": true, "reviewMarkers": [], "flags": {} }
+      }
+    },
+    {
+      "identifier": "PXDEMO002", "name": "Demo Review Patient", "phone": "+919900000002", "age": 49, "gender": "Female",
+      "report": {
+        "file": "demo-cbc-needs-review.pdf", "sampleId": "DEMO-CBC-002", "scenario": "plausibility-review",
+        "label": "Plausibility review CBC", "description": "Platelets 15; synthetic analyzer evidence supports manual correction to 250000.",
+        "values": [12.9, 4.7, 40, 85, 28, 33, 13.5, 6800, 58, 32, 4, 5, 1, 15],
+        "correctionEvidence": { "marker": "platelets", "value": 250000, "unit": "/cmm", "note": "Synthetic analyzer rerun; use only for manual review of this fixture." },
+        "expectedOutcome": { "validationStatus": "VALID", "coverageStatus": "COMPLETE", "testsDetected": 14, "observations": 14, "uploadStatus": "NEEDS_REVIEW", "publishEligible": false, "reviewMarkers": ["platelets"], "flags": { "platelets": "LOW" } }
+      }
+    },
+    {
+      "identifier": "PXDEMO003", "name": "Demo Incomplete Patient", "phone": "+919900000003", "age": 27, "gender": "Female",
+      "report": {
+        "file": "demo-cbc-incomplete.pdf", "sampleId": "DEMO-CBC-003", "scenario": "incomplete",
+        "label": "Incomplete CBC", "description": "Eight markers only; incomplete coverage blocks publication.",
+        "values": [13.8, 4.8, 42, 87, 29, 33, null, 6100, null, null, null, null, null, 220000],
+        "expectedOutcome": { "validationStatus": "VALID", "coverageStatus": "INCOMPLETE", "testsDetected": 8, "observations": 8, "uploadStatus": "NEEDS_REVIEW", "publishEligible": false, "reviewMarkers": [], "flags": {} }
+      }
+    },
+    {
+      "identifier": "PXDEMO004", "name": "Demo Asha Rao", "phone": "+919900000004", "age": 42, "gender": "Female",
+      "report": {
+        "file": "demo-cbc-normal-asha.pdf", "sampleId": "DEMO-CBC-004", "scenario": "another-normal",
+        "label": "Normal CBC - Asha", "description": "Second complete synthetic normal panel with matching female metadata.",
+        "values": [13.6, 4.6, 41, 89, 29.5, 33.2, 12.8, 5900, 56, 34, 3, 6, 1, 285000],
+        "expectedOutcome": { "validationStatus": "VALID", "coverageStatus": "COMPLETE", "testsDetected": 14, "observations": 14, "uploadStatus": "PROCESSING", "publishEligible": true, "reviewMarkers": [], "flags": {} }
+      }
+    },
+    {
+      "identifier": "PXDEMO005", "name": "Demo Kabir Shah", "phone": "+919900000005", "age": 56, "gender": "Male",
+      "report": {
+        "file": "demo-cbc-high-low.pdf", "sampleId": "DEMO-CBC-005", "scenario": "high-low-plausible",
+        "label": "Plausible HIGH / LOW CBC", "description": "Out-of-reference values within plausibility bounds; flags alone do not block publication.",
+        "values": [11.2, 4.1, 35, 85, 27.3, 32, 15.2, 12500, 76, 17, 1, 5, 1, 130000],
+        "expectedOutcome": { "validationStatus": "VALID", "coverageStatus": "COMPLETE", "testsDetected": 14, "observations": 14, "uploadStatus": "PROCESSING", "publishEligible": true, "reviewMarkers": [], "flags": { "hemoglobin": "LOW", "rbc": "LOW", "hematocrit": "LOW", "rdw": "HIGH", "wbc": "HIGH", "neutrophils": "HIGH", "lymphocytes": "LOW", "platelets": "LOW" } }
+      }
+    },
+    {
+      "identifier": "PXDEMO006", "name": "Demo Meera Sen", "phone": "+919900000006", "age": 31, "gender": "Female",
+      "report": {
+        "file": "demo-cbc-missing-reference.pdf", "sampleId": "DEMO-CBC-006", "scenario": "missing-reference",
+        "label": "Missing reference negative case", "description": "Hemoglobin has no source reference range; partial validation blocks publication.",
+        "values": [13.4, 4.5, 40, 88, 29.8, 33.5, 13, 6400, 59, 31, 3, 6, 1, 240000],
+        "missingReferences": ["hemoglobin"],
+        "expectedOutcome": { "validationStatus": "PARTIAL", "coverageStatus": "COMPLETE", "testsDetected": 14, "observations": 13, "uploadStatus": "NEEDS_REVIEW", "publishEligible": false, "reviewMarkers": [], "flags": {} }
+      }
+    }
+  ]
+}
