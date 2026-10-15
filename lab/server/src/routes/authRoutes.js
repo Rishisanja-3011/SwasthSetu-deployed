@@ -12,6 +12,7 @@ const {
 } = require('../security/tokens');
 const { requireAuth } = require('../middleware/requireAuth');
 const { publicProvider, resolveProvider } = require('../services/providerService');
+const firebaseAuth = require('../services/firebaseAuth');
 
 const router = express.Router();
 const OTP_TTL_MS = 5 * 60 * 1000;
@@ -77,17 +78,43 @@ function validatePatientProfile(body) {
   return { name, date_of_birth: dateOfBirth, age, gender };
 }
 
-async function createPatientAccount(phone, profile) {
+function accountConflict(code, message) {
+  const error = new Error(message);
+  error.code = code;
+  error.statusCode = 409;
+  return error;
+}
+
+async function createPatientAccount(phone, profile, { authProviderId = null } = {}) {
   const existingUser = await User.findOne({ phone });
   if (existingUser) {
+    if (existingUser.role !== 'PATIENT') {
+      throw accountConflict(
+        'PHONE_ALREADY_REGISTERED_FOR_PROVIDER',
+        'This mobile number is already registered to a provider account.',
+      );
+    }
     throw new Error('A user already exists for this phone number.');
   }
 
-  const user = await User.create({
+  if (authProviderId) {
+    const existingProviderUser = await User.findOne({ auth_provider_id: authProviderId });
+    if (existingProviderUser) {
+      throw accountConflict(
+        'FIREBASE_ACCOUNT_ALREADY_REGISTERED',
+        'This Firebase account is already linked to a patient account.',
+      );
+    }
+  }
+
+  const userFields = {
     role: 'PATIENT',
     phone,
     name: profile.name,
-  });
+  };
+  if (authProviderId) userFields.auth_provider_id = authProviderId;
+
+  const user = await User.create(userFields);
 
   try {
     let patientIdentifier;
@@ -135,6 +162,35 @@ async function allocateLaboratoryCode() {
     if (!laboratoryExists && !doctorExists) return candidate;
   }
   throw new Error('Could not allocate a unique laboratory ID.');
+}
+
+async function createPendingProviderVisit(provider, loginAttemptId, expiresAt) {
+  if (!provider) return;
+
+  await PendingProviderVisit.create({
+    login_attempt_id: String(loginAttemptId),
+    provider_type: provider.provider_type,
+    provider_id: provider.provider_id,
+    provider_code: provider.provider_code,
+    expires_at: expiresAt,
+  });
+}
+
+function firebaseExchangeErrorResponse(res, error) {
+  if (error instanceof firebaseAuth.FirebaseAuthError || error.statusCode) {
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.code || 'FIREBASE_AUTH_EXCHANGE_FAILED',
+      message: error.message,
+    });
+  }
+
+  console.error('Firebase patient auth exchange error:', error);
+  return res.status(500).json({
+    success: false,
+    error: 'FIREBASE_AUTH_EXCHANGE_FAILED',
+    message: 'Firebase authentication exchange failed.',
+  });
 }
 
 /**
@@ -269,15 +325,134 @@ router.post('/patient/verify-otp', async (req, res) => {
   }
 });
 
+router.post('/patient/firebase/exchange', async (req, res) => {
+  try {
+    const firebaseIdToken = req.body?.id_token || req.body?.firebase_id_token || req.body?.idToken;
+    const verifiedToken = await firebaseAuth.verifyFirebaseIdToken(firebaseIdToken);
+    if (
+      !verifiedToken
+      || typeof verifiedToken.uid !== 'string'
+      || !verifiedToken.uid.trim()
+      || typeof verifiedToken.phone_number !== 'string'
+    ) {
+      return res.status(401).json({
+        success: false,
+        error: 'FIREBASE_ID_TOKEN_INVALID',
+        message: 'The Firebase ID token did not contain a verified user phone.',
+      });
+    }
+    const phone = normalizePhone(verifiedToken.phone_number);
+    const firebaseUid = verifiedToken.uid.trim();
+
+    if (!phone) {
+      return res.status(401).json({
+        success: false,
+        error: 'FIREBASE_PHONE_INVALID',
+        message: 'The verified Firebase phone number is invalid.',
+      });
+    }
+
+    let requestedProvider = null;
+    const providerCode = req.body?.provider_code;
+    if (providerCode !== undefined && providerCode !== null && providerCode !== '') {
+      requestedProvider = await resolveProvider(providerCode);
+      if (!requestedProvider) {
+        return res.status(400).json({
+          success: false,
+          error: 'INVALID_PROVIDER_QR',
+          message: 'The doctor or laboratory code is not registered or approved.',
+        });
+      }
+    }
+
+    const [userByPhone, patient, userByFirebaseId] = await Promise.all([
+      User.findOne({ phone }),
+      Patient.findOne({ phone }),
+      User.findOne({ auth_provider_id: firebaseUid }),
+    ]);
+
+    if (userByPhone && userByPhone.role !== 'PATIENT') {
+      return res.status(409).json({
+        success: false,
+        error: 'PHONE_ALREADY_REGISTERED_FOR_PROVIDER',
+        message: 'This mobile number is already registered to a provider account.',
+      });
+    }
+
+    if (userByFirebaseId && normalizePhone(userByFirebaseId.phone) !== phone) {
+      throw accountConflict(
+        'FIREBASE_ACCOUNT_PHONE_CONFLICT',
+        'This Firebase account is already linked to a different phone number.',
+      );
+    }
+
+    if (userByPhone?.auth_provider_id && String(userByPhone.auth_provider_id) !== firebaseUid) {
+      throw accountConflict(
+        'FIREBASE_ACCOUNT_PHONE_CONFLICT',
+        'This phone number is already linked to a different Firebase account.',
+      );
+    }
+
+    const loginAttemptId = new mongoose.Types.ObjectId().toString();
+    const expiresAt = new Date(Date.now() + REGISTRATION_TOKEN_TTL_SECONDS * 1000);
+    await createPendingProviderVisit(requestedProvider, loginAttemptId, expiresAt);
+
+    if (patient) {
+      const pending = requestedProvider ? await consumePendingProviderVisit(loginAttemptId) : null;
+      const token = issueToken({ subject: patient.user_id, role: 'PATIENT' });
+      return res.json({
+        success: true,
+        registration_required: false,
+        access_token: token,
+        patient: responsePatient(patient),
+        pending_provider: pending || (requestedProvider ? publicProvider(requestedProvider) : null),
+      });
+    }
+
+    if (userByPhone) {
+      throw accountConflict(
+        'PATIENT_ACCOUNT_INCOMPLETE',
+        'A patient user exists for this phone number, but its patient profile is incomplete.',
+      );
+    }
+
+    const registrationToken = issueToken({
+      subject: phone,
+      role: 'PATIENT',
+      purpose: 'PATIENT_REGISTRATION',
+      expiresInSeconds: REGISTRATION_TOKEN_TTL_SECONDS,
+      extra: {
+        login_attempt_id: loginAttemptId,
+        auth_provider_id: firebaseUid,
+        firebase_uid: firebaseUid,
+      },
+    });
+
+    return res.json({
+      success: true,
+      registration_required: true,
+      registration_token: registrationToken,
+      registration_expires_in_seconds: REGISTRATION_TOKEN_TTL_SECONDS,
+      pending_provider: requestedProvider ? publicProvider(requestedProvider) : null,
+    });
+  } catch (error) {
+    return firebaseExchangeErrorResponse(res, error);
+  }
+});
+
 router.post('/patient/register', async (req, res) => {
   try {
     const registrationToken = req.body.registration_token;
     const registration = verifyToken(registrationToken, 'PATIENT_REGISTRATION');
     const profile = validatePatientProfile(req.body);
     const phone = normalizePhone(registration.sub);
+    const authProviderId = typeof registration.auth_provider_id === 'string'
+      ? registration.auth_provider_id.trim()
+      : (typeof registration.firebase_uid === 'string' ? registration.firebase_uid.trim() : null);
+    const pendingVisitId = registration.challenge_id || registration.login_attempt_id;
 
-    const { user, patient } = await createPatientAccount(phone, profile);
-    const pending = await consumePendingProviderVisit(registration.challenge_id);
+    const { user, patient } = await createPatientAccount(phone, profile, { authProviderId: authProviderId || null });
+    const pending = pendingVisitId ? await consumePendingProviderVisit(pendingVisitId) : null;
     const token = issueToken({ subject: user._id, role: 'PATIENT' });
 
     return res.status(201).json({
@@ -287,7 +462,8 @@ router.post('/patient/register', async (req, res) => {
       pending_provider: pending,
     });
   } catch (error) {
-    const statusCode = error.message.includes('token') || error.message.includes('Token') ? 401 : 400;
+    const statusCode = error.statusCode
+      || (error.message.includes('token') || error.message.includes('Token') ? 401 : 400);
     return res.status(statusCode).json({ success: false, error: error.message || 'PATIENT_REGISTRATION_FAILED' });
   }
 });

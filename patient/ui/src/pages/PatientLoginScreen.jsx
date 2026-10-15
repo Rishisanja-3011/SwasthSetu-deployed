@@ -1,8 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Activity, ArrowRight, CheckCircle2, LockKeyhole, Smartphone } from 'lucide-react';
+import {
+  firebaseErrorMessage,
+  resetFirebaseRecaptcha,
+  sendFirebaseVerificationCode,
+  verifyFirebaseCode,
+} from '../firebase/firebaseClient';
 import { patientApi } from '../services/patientApi';
 import { usePatient } from '../context/PatientContext';
+
+const PATIENT_AUTH_MODE = String(import.meta.env.VITE_PATIENT_AUTH_MODE || 'terminal').toLowerCase();
+const USE_FIREBASE_AUTH = PATIENT_AUTH_MODE === 'firebase';
+
+function firebasePhoneNumber(value) {
+  const normalized = String(value || '').replace(/[\s()-]/g, '');
+  return normalized.startsWith('00') ? `+${normalized.slice(2)}` : normalized;
+}
 
 function providerRoute(provider) {
   if (!provider?.provider_code) return '/';
@@ -28,10 +42,16 @@ export function PatientLoginScreen() {
   const [pendingProvider, setPendingProvider] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const firebaseConfirmationRef = useRef(null);
 
   useEffect(() => {
     if (isAuthenticated) navigate(returnTo, { replace: true });
   }, [isAuthenticated, navigate, returnTo]);
+
+  useEffect(() => () => {
+    firebaseConfirmationRef.current = null;
+    if (USE_FIREBASE_AUTH) resetFirebaseRecaptcha();
+  }, []);
 
   if (isAuthenticated) return null;
 
@@ -45,12 +65,22 @@ export function PatientLoginScreen() {
     setError('');
     setLoading(true);
     try {
-      const result = await patientApi.requestOtp({ phone, providerCode: pendingProviderCode || null });
-      setChallengeId(result.challenge_id);
-      setPendingProvider(result.pending_provider);
+      if (USE_FIREBASE_AUTH) {
+        firebaseConfirmationRef.current = await sendFirebaseVerificationCode(firebasePhoneNumber(phone));
+      } else {
+        const result = await patientApi.requestOtp({ phone, providerCode: pendingProviderCode || null });
+        setChallengeId(result.challenge_id);
+        setPendingProvider(result.pending_provider);
+      }
       setStep('OTP');
     } catch (requestError) {
-      setError(requestError.message);
+      if (USE_FIREBASE_AUTH) {
+        firebaseConfirmationRef.current = null;
+        resetFirebaseRecaptcha();
+        setError(firebaseErrorMessage(requestError));
+      } else {
+        setError(requestError.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -61,8 +91,22 @@ export function PatientLoginScreen() {
     setError('');
     setLoading(true);
     try {
-      const result = await patientApi.verifyOtp({ challengeId, otp });
+      let result;
+      if (USE_FIREBASE_AUTH) {
+        const firebaseSession = await verifyFirebaseCode(firebaseConfirmationRef.current, otp);
+        firebaseConfirmationRef.current = null;
+        result = await patientApi.exchangeFirebaseToken({
+          idToken: firebaseSession.idToken,
+          providerCode: pendingProviderCode || null,
+        });
+      } else {
+        result = await patientApi.verifyOtp({ challengeId, otp });
+      }
+
       if (result.registration_required) {
+        if (!result.registration_token) {
+          throw new Error('The authentication service did not return a registration token.');
+        }
         setRegistrationToken(result.registration_token);
         setPendingProvider(result.pending_provider || pendingProvider);
         setStep('REGISTRATION');
@@ -70,7 +114,7 @@ export function PatientLoginScreen() {
         finishAuthentication(result);
       }
     } catch (verifyError) {
-      setError(verifyError.message);
+      setError(USE_FIREBASE_AUTH ? firebaseErrorMessage(verifyError) : verifyError.message);
     } finally {
       setLoading(false);
     }
@@ -87,6 +131,7 @@ export function PatientLoginScreen() {
         age,
         dateOfBirth,
         gender,
+        providerCode: pendingProviderCode || null,
       });
       finishAuthentication({ ...result, pending_provider: result.pending_provider || pendingProvider });
     } catch (registrationError) {
@@ -122,8 +167,14 @@ export function PatientLoginScreen() {
             </label>
             <div style={{ position: 'relative', marginBottom: 14 }}>
               <Smartphone size={17} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--slate-400)' }} />
-              <input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="+91 98765 43210" required style={{ width: '100%', padding: '10px 12px 10px 38px', borderRadius: 9, border: '1px solid var(--border-medium)', fontSize: '0.95rem' }} />
+              <input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="+91 98765 43210" autoComplete="tel" required style={{ width: '100%', padding: '10px 12px 10px 38px', borderRadius: 9, border: '1px solid var(--border-medium)', fontSize: '0.95rem' }} />
             </div>
+            {USE_FIREBASE_AUTH && (
+              <p style={{ fontSize: '0.78rem', color: 'var(--slate-500)', margin: '-4px 0 12px' }}>
+                For Firebase fictional test numbers, no SMS is sent. Enter the fixed code configured for the number in Firebase Console.
+              </p>
+            )}
+            {USE_FIREBASE_AUTH && <div id="firebase-recaptcha-container" aria-hidden="true" />}
             <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading}>
               {loading ? 'Sending OTP...' : <>Continue with OTP <ArrowRight size={18} /></>}
             </button>
@@ -133,14 +184,14 @@ export function PatientLoginScreen() {
         {step === 'OTP' && (
           <form onSubmit={handleVerifyOtp}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--teal-700)', fontSize: '0.84rem', fontWeight: 700, marginBottom: 14 }}>
-              <LockKeyhole size={17} /> OTP sent to {phone}
+              <LockKeyhole size={17} /> Verification code sent to {phone}
             </div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--slate-700)', marginBottom: 6 }}>Six-digit OTP</label>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--slate-700)', marginBottom: 6 }}>{USE_FIREBASE_AUTH ? 'Six-digit Firebase code' : 'Six-digit OTP'}</label>
             <input value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" placeholder="123456" required style={{ width: '100%', padding: '12px 14px', borderRadius: 9, border: '1px solid var(--border-medium)', fontSize: '1.2rem', letterSpacing: '0.28em', textAlign: 'center', marginBottom: 14 }} />
             <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading || otp.length !== 6}>
               {loading ? 'Verifying...' : <>Verify mobile number <CheckCircle2 size={18} /></>}
             </button>
-            <button type="button" className="btn btn-secondary btn-block" onClick={() => { setStep('PHONE'); setError(''); }} style={{ marginTop: 8 }}>Use a different number</button>
+            <button type="button" className="btn btn-secondary btn-block" onClick={() => { firebaseConfirmationRef.current = null; if (USE_FIREBASE_AUTH) resetFirebaseRecaptcha(); setOtp(''); setStep('PHONE'); setError(''); }} style={{ marginTop: 8 }}>Use a different number</button>
           </form>
         )}
 

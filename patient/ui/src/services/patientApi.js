@@ -110,7 +110,20 @@ export const patientApi = {
     }, false);
   },
 
-  async registerPatient({ registrationToken, name, age, dateOfBirth, gender }) {
+  async exchangeFirebaseToken({ idToken, providerCode = null }) {
+    if (!idToken) throw new Error('Firebase did not return an ID token.');
+
+    const exchangePath = import.meta.env.VITE_PATIENT_FIREBASE_EXCHANGE_PATH || '/auth/patient/firebase/exchange';
+    return request(exchangePath, {
+      method: 'POST',
+      body: JSON.stringify({
+        id_token: idToken,
+        provider_code: providerCode || undefined,
+      }),
+    }, false);
+  },
+
+  async registerPatient({ registrationToken, name, age, dateOfBirth, gender, providerCode = null }) {
     const result = await request('/auth/patient/register', {
       method: 'POST',
       body: JSON.stringify({
@@ -119,6 +132,7 @@ export const patientApi = {
         age: age ? Number(age) : null,
         date_of_birth: dateOfBirth || null,
         gender,
+        provider_code: providerCode || undefined,
       }),
     }, false);
     savePatientSession(result.access_token, result.patient);
