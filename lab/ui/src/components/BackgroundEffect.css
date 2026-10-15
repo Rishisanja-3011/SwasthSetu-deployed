@@ -1,0 +1,402 @@
+/* ==========================================================================
+   VaaniDoc — 3D Neomorphic Soft Aqua-White Background Layer
+   Theme: Soft porcelain white with delicate pale aqua & gentle healthcare teal tinting.
+   Features:
+   - Soft white / warm-porcelain base with subtle pale aqua gradients
+   - Soft white curved circular perimeter rings with delicate aqua/teal edge lighting
+   - Subtle aqua-slate shadows blending naturally with VaaniDoc theme
+   - Very slow, gentle ambient floating & light breathing animations (10s–16s cycles)
+   - Zero layout interference: position fixed, pointer-events none, z-index 0
+   ========================================================================== */
+
+/* Fixed Viewport Background Shell */
+.neo-background-viewport {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  user-select: none;
+  contain: strict;
+}
+
+/* ==========================================================================
+   1. BASE CANVAS & AMBIENT RADIAL LIGHTING
+   Soft white foundation with subtle pale aqua tones
+   ========================================================================== */
+
+.neo-bg-base-canvas {
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(circle at 14% 14%, rgba(205, 235, 240, 0.45) 0%, transparent 45%),
+    radial-gradient(circle at 86% 26%, rgba(210, 238, 242, 0.40) 0%, transparent 42%),
+    radial-gradient(circle at 80% 82%, rgba(200, 232, 238, 0.38) 0%, transparent 45%),
+    linear-gradient(135deg, #F3F9FA 0%, #FAFCFC 45%, #F0F8F9 85%, #E9F4F6 100%);
+}
+
+/* Central Clarity Glow (Keeps center reading area bright, clean, and legible) */
+.neo-bg-center-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 45%, rgba(255, 255, 255, 0.90) 0%, rgba(246, 252, 253, 0.50) 60%, transparent 100%);
+  animation: neoAmbientBreathe 10s ease-in-out infinite;
+  will-change: opacity;
+}
+
+/* ==========================================================================
+   2. TOP-LEFT CONCENTRIC CURVED CIRCULAR ARCS
+   Features crisp white upper rim highlight, delicate teal edge glow,
+   and slow, gentle floating & ring movement (14s & 16s cycles)
+   ========================================================================== */
+
+.neo-bg-arc-tl-outer {
+  position: absolute;
+  top: -140px;
+  left: -140px;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(230, 245, 248, 0.65) 100%);
+  border: 2.5px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 
+    14px 18px 46px rgba(120, 175, 190, 0.26),
+    0 6px 20px rgba(34, 146, 160, 0.10),
+    -8px -8px 24px rgba(255, 255, 255, 0.95),
+    inset 0 2px 6px rgba(255, 255, 255, 1);
+  animation: neoFloatTlOuter 14s ease-in-out infinite;
+  will-change: transform;
+}
+
+.neo-bg-arc-tl-inner {
+  position: absolute;
+  top: 75px;
+  left: 75px;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96) 0%, rgba(236, 248, 250, 0.72) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 
+    10px 14px 34px rgba(125, 178, 192, 0.20),
+    0 4px 14px rgba(34, 146, 160, 0.08),
+    -4px -4px 16px rgba(255, 255, 255, 0.92),
+    inset 0 2px 4px rgba(255, 255, 255, 1);
+  animation: neoFloatTlInner 16s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ==========================================================================
+   3. RIGHT-SIDE RAISED NEOMORPHIC FLOATING DISC
+   Features soft top-left specular highlight, gentle aqua-slate shadow,
+   and slow, subtle vertical float (12s cycle)
+   ========================================================================== */
+
+.neo-bg-disc-right {
+  position: absolute;
+  top: 20%;
+  right: -75px;
+  width: 270px;
+  height: 270px;
+  border-radius: 50%;
+  background: linear-gradient(140deg, #FFFFFF 0%, #DDF2F5 100%);
+  border: 2px solid rgba(255, 255, 255, 0.94);
+  box-shadow: 
+    14px 18px 46px rgba(130, 180, 195, 0.25),
+    0 6px 22px rgba(34, 146, 160, 0.09),
+    -10px -10px 28px rgba(255, 255, 255, 0.95),
+    inset 2px 2px 6px rgba(255, 255, 255, 0.95);
+  animation: neoFloatDiscRight 12s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ==========================================================================
+   4. BOTTOM-LEFT CONCENTRIC CURVED CIRCULAR ARCS
+   Features soft white rim lighting, pale aqua interior,
+   and gentle floating movement (15s & 13s cycles)
+   ========================================================================== */
+
+.neo-bg-arc-bl-outer {
+  position: absolute;
+  bottom: -140px;
+  left: -140px;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.94) 0%, rgba(230, 245, 248, 0.62) 100%);
+  border: 2.5px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 
+    14px 18px 44px rgba(120, 175, 190, 0.24),
+    0 6px 18px rgba(34, 146, 160, 0.08),
+    -8px -8px 24px rgba(255, 255, 255, 0.95),
+    inset 0 2px 6px rgba(255, 255, 255, 1);
+  animation: neoFloatBlOuter 15s ease-in-out infinite;
+  will-change: transform;
+}
+
+.neo-bg-arc-bl-inner {
+  position: absolute;
+  top: 80px;
+  left: 80px;
+  width: 310px;
+  height: 310px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96) 0%, rgba(236, 248, 250, 0.70) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 
+    8px 12px 28px rgba(125, 178, 192, 0.18),
+    -4px -4px 14px rgba(255, 255, 255, 0.9),
+    inset 0 2px 4px rgba(255, 255, 255, 1);
+  animation: neoFloatBlInner 13s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ==========================================================================
+   5. BOTTOM-RIGHT ROUNDED CORNER WAVE / CURVED SURFACE
+   Soft layered rounded surface with ambient aqua-slate depth (11s cycle)
+   ========================================================================== */
+
+.neo-bg-wave-br-outer {
+  position: absolute;
+  bottom: -120px;
+  right: -120px;
+  width: 450px;
+  height: 450px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.93) 0%, rgba(228, 244, 248, 0.64) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 
+    -12px -16px 42px rgba(120, 175, 190, 0.24),
+    0 -6px 20px rgba(34, 146, 160, 0.08),
+    6px 6px 20px rgba(255, 255, 255, 0.9),
+    inset 0 2px 5px rgba(255, 255, 255, 1);
+  animation: neoFloatBrOuter 11s ease-in-out infinite;
+  will-change: transform;
+}
+
+.neo-bg-wave-br-inner {
+  position: absolute;
+  top: 75px;
+  left: 75px;
+  width: 290px;
+  height: 290px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96) 0%, rgba(236, 249, 251, 0.74) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 
+    -8px -10px 26px rgba(125, 178, 192, 0.16),
+    inset 0 2px 4px rgba(255, 255, 255, 1);
+}
+
+/* ==========================================================================
+   6. TOP-RIGHT NEOMORPHIC ACCENT ORB
+   Subtle rounded pill accent with quiet lighting
+   ========================================================================== */
+
+.neo-bg-orb-tr {
+  position: absolute;
+  top: 36px;
+  right: 48px;
+  width: 62px;
+  height: 62px;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #FFFFFF 0%, #E6F5F8 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 
+    6px 8px 18px rgba(130, 180, 195, 0.20),
+    -5px -5px 15px rgba(255, 255, 255, 0.95),
+    inset 0 1px 2px rgba(255, 255, 255, 1);
+}
+
+/* ==========================================================================
+   7. SUBTLE, CONTINUOUS KEYFRAME ANIMATIONS
+   Long cycles (10s–16s), microscopic pixel drifts (3px–8px max),
+   and gentle ambient breathing. Zero jumping or distraction.
+   ========================================================================== */
+
+/* Top-Left Outer Ring: slow, subtle drift */
+@keyframes neoFloatTlOuter {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(6px, 8px);
+  }
+}
+
+/* Top-Left Inner Ring: slight counter-drift creating parallax depth */
+@keyframes neoFloatTlInner {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-4px, -3px);
+  }
+}
+
+/* Right Floating Disc: slow vertical float */
+@keyframes neoFloatDiscRight {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-5px, 9px);
+  }
+}
+
+/* Bottom-Left Outer Ring: slow gentle drift */
+@keyframes neoFloatBlOuter {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(7px, -6px);
+  }
+}
+
+/* Bottom-Left Inner Ring: subtle complementary movement */
+@keyframes neoFloatBlInner {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-3px, 4px);
+  }
+}
+
+/* Bottom-Right Corner Wave: slow ambient breath */
+@keyframes neoFloatBrOuter {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-6px, -5px);
+  }
+}
+
+/* Central Clarity Glow: gentle ambient breathing in light */
+@keyframes neoAmbientBreathe {
+  0%, 100% {
+    opacity: 0.88;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   8. RESPONSIVE BEHAVIOR
+   Naturally scales the decorative perimeter curves for tablets and phones
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .neo-bg-arc-tl-outer {
+    width: 420px;
+    height: 420px;
+    top: -120px;
+    left: -120px;
+  }
+  .neo-bg-arc-tl-inner {
+    width: 290px;
+    height: 290px;
+    top: 60px;
+    left: 60px;
+  }
+  .neo-bg-disc-right {
+    width: 210px;
+    height: 210px;
+    right: -60px;
+  }
+  .neo-bg-arc-bl-outer {
+    width: 390px;
+    height: 390px;
+    bottom: -110px;
+    left: -110px;
+  }
+  .neo-bg-arc-bl-inner {
+    width: 250px;
+    height: 250px;
+    top: 65px;
+    left: 65px;
+  }
+  .neo-bg-wave-br-outer {
+    width: 360px;
+    height: 360px;
+    bottom: -100px;
+    right: -100px;
+  }
+  .neo-bg-wave-br-inner {
+    width: 230px;
+    height: 230px;
+    top: 60px;
+    left: 60px;
+  }
+  .neo-bg-orb-tr {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .neo-bg-arc-tl-outer {
+    width: 300px;
+    height: 300px;
+    top: -90px;
+    left: -90px;
+  }
+  .neo-bg-arc-tl-inner {
+    width: 200px;
+    height: 200px;
+    top: 45px;
+    left: 45px;
+  }
+  .neo-bg-disc-right {
+    width: 160px;
+    height: 160px;
+    right: -50px;
+    top: 25%;
+  }
+  .neo-bg-arc-bl-outer {
+    width: 280px;
+    height: 280px;
+    bottom: -90px;
+    left: -90px;
+  }
+  .neo-bg-arc-bl-inner {
+    width: 180px;
+    height: 180px;
+    top: 45px;
+    left: 45px;
+  }
+  .neo-bg-wave-br-outer {
+    width: 260px;
+    height: 260px;
+    bottom: -80px;
+    right: -80px;
+  }
+  .neo-bg-wave-br-inner {
+    width: 160px;
+    height: 160px;
+    top: 45px;
+    left: 45px;
+  }
+}
+
+/* Reduced Motion Support: Disable all background motion */
+@media (prefers-reduced-motion: reduce) {
+  .neo-bg-arc-tl-outer,
+  .neo-bg-arc-tl-inner,
+  .neo-bg-disc-right,
+  .neo-bg-arc-bl-outer,
+  .neo-bg-arc-bl-inner,
+  .neo-bg-wave-br-outer,
+  .neo-bg-wave-br-inner,
+  .neo-bg-center-glow {
+    animation: none !important;
+    transform: none !important;
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "vaanidoc-public-landing",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": { "dev": "vite --port 5174 --host", "build": "vite build", "preview": "vite preview --port 5174" },
+  "dependencies": { "lucide-react": "^0.468.0", "react": "^19.2.8", "react-dom": "^19.2.8" },
+  "devDependencies": { "@vitejs/plugin-react": "^6.1.1", "vite": "^8.3.0" }
+}

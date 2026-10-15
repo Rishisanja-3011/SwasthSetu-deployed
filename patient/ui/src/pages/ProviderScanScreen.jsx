@@ -29,7 +29,10 @@ export function ProviderScanScreen() {
     let cancelled = false;
     patientApi.resolveCode(providerCode)
       .then((resolved) => {
-        if (!cancelled) setProvider(resolved);
+        if (!cancelled) {
+          setProvider(resolved);
+          sessionStorage.setItem('vaanidoc_pending_scan_provider', JSON.stringify(resolved));
+        }
       })
       .catch((lookupError) => {
         if (!cancelled) setError(lookupError.message);
@@ -39,7 +42,7 @@ export function ProviderScanScreen() {
 
   useEffect(() => {
     if (provider?.type === 'DOCTOR') {
-      navigate('/doctor-confirm', { replace: true, state: { doctor: provider.entity } });
+      navigate(`/doctor-confirm?provider=${encodeURIComponent(provider.code)}`, { replace: true, state: { doctor: provider.entity } });
     }
   }, [navigate, provider]);
 

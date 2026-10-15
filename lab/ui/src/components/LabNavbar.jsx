@@ -23,7 +23,7 @@ export default function LabNavbar({
       <div className="navbar-right-group">
         {/* Lab Identity */}
         <div className="lab-identity-badge">
-          <Building2 size={16} color="var(--text-muted)" />
+          <Building2 size={16} color="var(--hospital-blue)" />
           <strong style={{ color: 'var(--text-main)' }}>{lab?.name || 'Laboratory'}</strong>
           <span className="lab-code-pill">{lab?.qr_code_id || 'ID unavailable'}</span>
         </div>

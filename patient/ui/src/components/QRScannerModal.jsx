@@ -1,11 +1,38 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { X, Camera, QrCode, AlertCircle, ArrowRight, Stethoscope, Building2 } from 'lucide-react';
 import { patientApi } from '../services/patientApi';
+import { Html5Qrcode } from 'html5-qrcode';
 
 export function QRScannerModal({ isOpen, onClose, onCodeResolved }) {
   const [manualCode, setManualCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [cameraState, setCameraState] = useState('starting');
+  const scannerRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const scanner = new Html5Qrcode('patient-qr-reader');
+    scannerRef.current = scanner;
+    const safeStop = async () => {
+      try { await scanner.stop(); } catch { /* already stopped or never started */ }
+      try { scanner.clear(); } catch { /* container already unmounted */ }
+    };
+    scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.4 },
+      async (decodedText) => {
+        setCameraState('found');
+        await safeStop();
+        await handleResolve(decodedText);
+      },
+      () => {},
+    ).then(() => setCameraState('scanning')).catch((cameraError) => {
+      setCameraState('denied');
+      setError(cameraError?.message || 'Camera could not be started. Allow camera access or use image upload/manual code.');
+    });
+    return () => { safeStop(); scannerRef.current = null; };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -20,6 +47,23 @@ export function QRScannerModal({ isOpen, onClose, onCodeResolved }) {
       setError(err.message || 'Unable to recognize this QR code. Please check the code.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImageScan = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    try {
+      const imageScanner = new Html5Qrcode('patient-qr-image-reader');
+      const decoded = await imageScanner.scanFile(file, true);
+      await imageScanner.clear();
+      await handleResolve(decoded);
+    } catch {
+      setError('Could not read that QR image. Try a sharper photo or enter the code manually.');
+    } finally {
+      event.target.value = '';
     }
   };
 
@@ -48,7 +92,7 @@ export function QRScannerModal({ isOpen, onClose, onCodeResolved }) {
         </div>
 
         {/* Viewfinder simulation */}
-        <div style={{
+           <div style={{
           position: 'relative',
           height: 220,
           backgroundColor: '#051329',
@@ -60,7 +104,8 @@ export function QRScannerModal({ isOpen, onClose, onCodeResolved }) {
           justifyContent: 'center',
           marginBottom: 16,
           border: '2px solid #1e293b',
-        }}>
+           }}>
+           <div id="patient-qr-reader" aria-label="Camera QR preview" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
           {/* Animated Laser Sweep Line */}
           <div style={{
             position: 'absolute',
@@ -83,7 +128,7 @@ export function QRScannerModal({ isOpen, onClose, onCodeResolved }) {
             justifyContent: 'center',
             position: 'relative',
           }}>
-            <Camera size={36} color="rgba(255,255,255,0.6)" />
+             <Camera size={36} color="rgba(255,255,255,0.6)" />
           </div>
 
           <span style={{
@@ -93,9 +138,15 @@ export function QRScannerModal({ isOpen, onClose, onCodeResolved }) {
             color: 'rgba(255, 255, 255, 0.7)',
             fontWeight: 500,
           }}>
-            Align QR code within the frame
+             {cameraState === 'scanning' ? 'Align QR code within the frame' : cameraState === 'starting' ? 'Starting camera…' : 'Use image upload or enter the code below'}
           </span>
-        </div>
+         </div>
+
+         <div id="patient-qr-image-reader" style={{ display: 'none' }} />
+         <label className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', marginBottom: 18, cursor: 'pointer' }}>
+           <QrCode size={16} /> Upload QR image
+           <input type="file" accept="image/*" onChange={handleImageScan} style={{ display: 'none' }} />
+         </label>
 
         {/* One-tap Test Presets */}
         <div style={{ marginBottom: 18 }}>
@@ -106,28 +157,28 @@ export function QRScannerModal({ isOpen, onClose, onCodeResolved }) {
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={() => handleResolve('DOC-409')}
+              onClick={() => handleResolve('DOC-DEMO01')}
               disabled={loading}
               style={{ padding: '9px 10px', fontSize: '0.8rem', justifyContent: 'flex-start', textAlign: 'left' }}
             >
               <Stethoscope size={16} color="var(--blue-600)" />
               <div>
                 <strong style={{ display: 'block', color: 'var(--navy-900)' }}>Dr. Mehta</strong>
-                <span style={{ fontSize: '0.7rem', color: 'var(--slate-500)', fontFamily: 'var(--font-mono)' }}>DOC-409</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--slate-500)', fontFamily: 'var(--font-mono)' }}>DOC-DEMO01</span>
               </div>
             </button>
 
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={() => handleResolve('LAB-808')}
+              onClick={() => handleResolve('LAB-DEMO01')}
               disabled={loading}
               style={{ padding: '9px 10px', fontSize: '0.8rem', justifyContent: 'flex-start', textAlign: 'left' }}
             >
               <Building2 size={16} color="var(--teal-600)" />
               <div>
                 <strong style={{ display: 'block', color: 'var(--navy-900)' }}>Lifeline Lab</strong>
-                <span style={{ fontSize: '0.7rem', color: 'var(--slate-500)', fontFamily: 'var(--font-mono)' }}>LAB-808</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--slate-500)', fontFamily: 'var(--font-mono)' }}>LAB-DEMO01</span>
               </div>
             </button>
           </div>
@@ -141,7 +192,7 @@ export function QRScannerModal({ isOpen, onClose, onCodeResolved }) {
           <div style={{ display: 'flex', gap: 8 }}>
             <input
               type="text"
-              placeholder="e.g. DOC-409 or LAB-808"
+              placeholder="e.g. DOC-DEMO01 or LAB-DEMO01"
               value={manualCode}
               onChange={(e) => setManualCode(e.target.value)}
               style={{

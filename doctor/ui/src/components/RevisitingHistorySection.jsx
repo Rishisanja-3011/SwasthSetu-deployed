@@ -1,5 +1,6 @@
 import React from 'react';
 import { History, FileText, FlaskConical, Shield, Calendar, UserCheck } from 'lucide-react';
+import { doctorApi } from '../services/doctorApi';
 
 const EMPTY_VALUE = '— Not available yet —';
 
@@ -17,9 +18,22 @@ function IntakeField({ label, value }) {
   );
 }
 
-export const RevisitingHistorySection = ({ priorNotes = [], priorIntakes = [], publishedReports = [], doctorName = 'Dr. Ramesh Mehta' }) => {
+export const RevisitingHistorySection = ({ priorNotes = [], priorIntakes = [], publishedReports = [], doctorName = 'Dr. Ramesh Mehta', encounterId }) => {
+  const downloadOriginal = async (report) => {
+    try {
+      const blob = await doctorApi.downloadOriginalReport(encounterId, report.id || report._id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = report.original_file_name || `report-${report.id || report._id}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      window.alert(error.message || 'Original report is unavailable.');
+    }
+  };
   return (
-    <div style={{ marginBottom: 28 }}>
+    <div id="doctor-reports" style={{ marginBottom: 28 }}>
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -203,6 +217,10 @@ export const RevisitingHistorySection = ({ priorNotes = [], priorIntakes = [], p
                       PUBLISHED
                     </span>
                   </div>
+
+                  <button type="button" className="btn-secondary" onClick={() => downloadOriginal(rep)} style={{ marginTop: 8, padding: '6px 10px', fontSize: '0.74rem' }}>
+                    <FileText size={14} /> View original PDF
+                  </button>
 
                   {/* Observations Table Preview */}
                   {rep.observations && rep.observations.length > 0 && (

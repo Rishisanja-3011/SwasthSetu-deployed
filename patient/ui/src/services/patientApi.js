@@ -11,6 +11,7 @@ function parseResponse(response, json) {
   const error = new Error(json?.message || json?.error || 'Request failed');
   error.status = response.status;
   error.code = json?.error;
+  error.encounter = json?.encounter;
   throw error;
 }
 
@@ -33,6 +34,21 @@ async function request(path, options = {}, authenticated = true) {
 function savePatientSession(accessToken, patient) {
   localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
   localStorage.setItem(STORAGE_KEYS.PATIENT, JSON.stringify(patient));
+}
+
+function providerCodeFromInput(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  try {
+    const url = new URL(raw, window.location.origin);
+    const parts = url.pathname.split('/').filter(Boolean);
+    const scanIndex = parts.findIndex((part) => part.toLowerCase() === 'scan');
+    if (scanIndex >= 0 && parts[scanIndex + 1] && parts[scanIndex + 2]) return parts[scanIndex + 2];
+    if (scanIndex >= 0 && parts[scanIndex + 1]) return parts[scanIndex + 1];
+  } catch {
+    // Plain provider codes are accepted below.
+  }
+  return raw;
 }
 
 export const patientApi = {
@@ -110,7 +126,7 @@ export const patientApi = {
   },
 
   async resolveCode(code) {
-    const clean = String(code || '').trim().toUpperCase();
+    const clean = providerCodeFromInput(code).toUpperCase();
     if (!clean) throw new Error('Code is required.');
 
     const result = await request(`/providers/resolve/${encodeURIComponent(clean)}`, {}, false);
@@ -176,13 +192,34 @@ export const patientApi = {
         this.clearActiveEncounter();
       }
     }
-    const result = await request('/patient/encounters', {
-      method: 'POST',
-      body: JSON.stringify({ doctor_code: doctor.qr_code_id, visit_type: visitType }),
-    });
-    const encounter = result.encounter;
-    localStorage.setItem(STORAGE_KEYS.ACTIVE_ENCOUNTER, JSON.stringify(encounter));
-    return encounter;
+    try {
+      const result = await request('/patient/encounters', {
+        method: 'POST',
+        body: JSON.stringify({ doctor_code: doctor.qr_code_id, visit_type: visitType }),
+      });
+      const encounter = result.encounter;
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_ENCOUNTER, JSON.stringify(encounter));
+      return encounter;
+    } catch (error) {
+      if (error.code === 'ONGOING_CONSULTATION' && error.encounter) {
+        this.saveActiveEncounter(error.encounter);
+        return error.encounter;
+      }
+      throw error;
+    }
+  },
+
+  async getActiveEncounterFromServer() {
+    const result = await request('/patient/active-encounter');
+    if (result.encounter) this.saveActiveEncounter(result.encounter);
+    else this.clearActiveEncounter();
+    return result.encounter || null;
+  },
+
+  async endEncounter(encounterId) {
+    const result = await request(`/patient/encounters/${encodeURIComponent(encounterId)}/end`, { method: 'POST' });
+    this.clearActiveEncounter();
+    return result.encounter;
   },
 
   saveActiveEncounter(encounter) {

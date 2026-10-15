@@ -1,0 +1,32 @@
+import React from 'react';
+import { ArrowRight, CheckCircle2, Languages, ShieldCheck, Stethoscope, FlaskConical, Mic2 } from 'lucide-react';
+import './LandingPage.css';
+
+const appLink = (key, fallback) => `${(import.meta.env[key] || fallback).replace(/\/$/, '')}/login`;
+
+export function LandingPage() {
+  return (
+    <div className="public-landing">
+      <header className="landing-nav">
+        <a href="/welcome" className="landing-brand"><span className="landing-brand-mark"><Stethoscope size={20} /></span><span>VaaniDoc</span></a>
+        <div className="landing-nav-actions"><a href="/login" className="landing-nav-link">Patient login</a><a href={appLink('VITE_DOCTOR_APP_URL', 'http://localhost:5175')} className="landing-nav-link">Doctor portal</a><a href={appLink('VITE_LAB_APP_URL', 'http://localhost:3000')} className="landing-nav-cta">Laboratory portal <ArrowRight size={15} /></a></div>
+      </header>
+
+      <main>
+        <section className="landing-hero">
+          <div className="landing-hero-copy"><span className="landing-eyebrow">Multilingual healthcare communication</span><h1>Every patient deserves to be understood.</h1><p>VaaniDoc helps patients describe symptoms in their own language, preserves their original meaning, and gives doctors a clearer structured intake—without taking clinical decisions away from qualified professionals.</p><div className="landing-hero-actions"><a className="landing-primary" href="/login">Start as a patient <ArrowRight size={17} /></a><a className="landing-secondary" href="#how-it-works">See how it works</a></div><div className="landing-trust"><ShieldCheck size={16} /> Patient-owned records · bounded doctor access · reviewable laboratory reports</div></div>
+          <div className="landing-visual-stage"><div className="landing-orbit orbit-one" /><div className="landing-orbit orbit-two" /><div className="landing-spark spark-one">✦</div><div className="landing-spark spark-two">✦</div><div className="landing-float-chip chip-language"><Languages size={15} /> Multilingual</div><div className="landing-float-chip chip-secure"><ShieldCheck size={15} /> Patient-owned</div><div className="landing-hero-card"><div className="landing-hero-card-top"><span><Mic2 size={17} /> Voice intake</span><span className="landing-live-dot">● Ready</span></div><div className="landing-speech">“मुझे तीन दिनों से पेट में तेज़ दर्द है…”</div><div className="landing-translation"><span>Structured for the doctor</span><strong>Chief complaint · abdominal pain</strong><small>Original statement preserved · Patient confirms before sharing</small></div><div className="landing-hero-footer"><Languages size={17} /> Hindi · Kannada · Gujarati · English and more</div></div></div>
+        </section>
+
+        <section className="landing-section landing-problem"><div className="landing-section-heading"><span className="landing-eyebrow">Why this matters</span><h2>When communication fails, care can fail with it.</h2><p>Language-discordant consultations can affect symptom reporting, diagnosis, medication instructions, and patient safety. VaaniDoc is designed around that specific communication gap.</p></div><div className="landing-stats"><article><strong>12<span>/25</span></strong><p>Patients in a Karnataka multilingual-community study who believed language barriers contributed to an incorrect or missed diagnosis.</p></article><article><strong>6<span>/25</span></strong><p>Healthcare workers who reported misdiagnosis or failure to diagnose during language-discordant interactions.</p></article></div><p className="landing-source">India-specific research · Karnataka · 2026. Small study sample, not a national prevalence estimate. Source: Kozan, Siddaiah &amp; Dasgupta, <em>Frontiers in Communication</em>, published July 10, 2026.</p></section>
+
+        <section className="landing-section landing-callout"><div><span className="landing-eyebrow">A real communication failure</span><h2>“Severe menstrual cramps” was initially understood as acidity or gas.</h2><p>The research describes a case where the misunderstanding was clarified with a translator. The lesson is simple: the problem may not be a lack of medical knowledge—it may be a failure of communication.</p></div><div className="landing-quote">“A patient should not receive poorer care simply because their language is different from their doctor’s.”</div></section>
+
+        <section id="how-it-works" className="landing-section"><div className="landing-section-heading"><span className="landing-eyebrow">One connected workflow</span><h2>From the patient’s words to a safer clinical handoff.</h2></div><div className="landing-steps"><article><span>01</span><Languages size={24} /><h3>Patient speaks naturally</h3><p>Voice or text intake in the patient’s preferred language. The original statement stays visible.</p></article><article><span>02</span><CheckCircle2 size={24} /><h3>Patient reviews</h3><p>Structured fields are shown to the patient for correction and confirmation before the doctor sees them.</p></article><article><span>03</span><Stethoscope size={24} /><h3>Doctor understands</h3><p>The doctor receives the confirmed intake, queue context, and bounded access to the active consultation.</p></article><article><span>04</span><FlaskConical size={24} /><h3>Lab reports stay traceable</h3><p>Laboratories extract, review, correct, publish, and notify patients with an original-report receipt.</p></article></div></section>
+
+        <section className="landing-section landing-audience"><div><span className="landing-eyebrow">Choose your workspace</span><h2>Start where your work happens.</h2><p>Patients use the secure record. Doctors manage their consultation queue. Laboratories verify and publish reports.</p></div><div className="landing-audience-actions"><a href={appLink('VITE_DOCTOR_APP_URL', 'http://localhost:5175')} className="landing-role-card"><Stethoscope size={24} /><strong>Doctor portal</strong><span>Queue, intake review, consultation notes and patient-granted history <ArrowRight size={16} /></span></a><a href={appLink('VITE_LAB_APP_URL', 'http://localhost:3000')} className="landing-role-card"><FlaskConical size={24} /><strong>Laboratory portal</strong><span>Access grants, CBC extraction, review and publication <ArrowRight size={16} /></span></a></div></section>
+      </main>
+      <footer className="landing-footer">VaaniDoc · Built to reduce communication risk while keeping clinical decisions with qualified professionals.</footer>
+    </div>
+  );
+}

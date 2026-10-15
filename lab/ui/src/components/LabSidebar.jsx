@@ -38,11 +38,12 @@ export default function LabSidebar({
               style={{
                 marginLeft: 'auto',
                 fontSize: '0.72rem',
-                background: currentView === 'patient_visit' ? 'var(--blue-primary)' : 'var(--border-medium)',
-                color: currentView === 'patient_visit' ? '#fff' : 'var(--text-secondary)',
-                padding: '0.12rem 0.5rem',
+                background: currentView === 'patient_visit' ? 'linear-gradient(135deg, #32B3C2 0%, #2292A0 100%)' : 'var(--surface-inset)',
+                color: currentView === 'patient_visit' ? '#fff' : 'var(--hospital-blue)',
+                padding: '0.14rem 0.55rem',
                 borderRadius: 'var(--radius-full)',
                 fontWeight: 700,
+                boxShadow: currentView === 'patient_visit' ? '0 2px 6px rgba(34, 146, 160, 0.3)' : 'var(--neo-inset-sm)',
               }}
             >
               {counts.pendingVisits}
@@ -61,11 +62,12 @@ export default function LabSidebar({
               style={{
                 marginLeft: 'auto',
                 fontSize: '0.7rem',
-                background: '#ef4444',
+                background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
                 color: '#fff',
-                padding: '0.1rem 0.45rem',
+                padding: '0.12rem 0.5rem',
                 borderRadius: 'var(--radius-full)',
                 fontWeight: 700,
+                boxShadow: '0 2px 6px rgba(220, 38, 38, 0.35)',
               }}
             >
               {counts.needsReview}

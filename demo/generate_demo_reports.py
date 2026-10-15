@@ -8,6 +8,7 @@ synthetic and must never be presented as clinical records.
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import subprocess
 import sys
@@ -465,6 +466,40 @@ def verify_reports(catalog: dict) -> None:
               f"{expected['validationStatus']}/{expected['coverageStatus']}; {expected['uploadStatus']}")
 
 
+def corrected_companion(catalog: dict, source_patient: dict) -> tuple[dict, dict]:
+    """Build an upload-ready, complete companion for every demo patient.
+
+    The original files remain available for demonstrating review blockers. Each
+    companion removes synthetic source defects and carries the same patient
+    identity, so an operator can upload a clean replacement on a fresh grant.
+    """
+    patient = copy.deepcopy(source_patient)
+    source_report = patient["report"]
+    report = copy.deepcopy(source_report)
+    stem = Path(source_report["file"]).stem
+    report["file"] = f"{stem}-corrected.pdf"
+    report["sampleId"] = f"{source_report['sampleId']}-CORRECTED"
+    report["scenario"] = f"{source_report['scenario']}-corrected"
+    report["label"] = f"Corrected {source_report.get('label', 'CBC')}"
+    report["description"] = "Upload-ready complete synthetic companion with review defects corrected."
+    report.pop("correctionEvidence", None)
+    report.pop("missingReferences", None)
+    report["values"] = []
+    for marker in catalog["markers"]:
+        reference = marker["reference"]
+        if isinstance(reference, dict):
+            reference = reference[patient["gender"]]
+        midpoint = (reference[0] + reference[1]) / 2
+        report["values"].append(int(midpoint) if midpoint.is_integer() else round(midpoint, 2))
+    report["expectedOutcome"] = {
+        "validationStatus": "VALID", "coverageStatus": "COMPLETE", "testsDetected": 14,
+        "observations": 14, "uploadStatus": "PROCESSING", "publishEligible": True,
+        "reviewMarkers": [], "flags": {},
+    }
+    patient["report"] = report
+    return patient, report
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--verify", action="store_true", help="Also check PDF layout and the local Python extraction bridge (requires PyMuPDF/numpy).")
@@ -481,8 +516,15 @@ def main() -> None:
         pages = report_pages(catalog, patient)
         make_pdf(REPORTS / filename, pages)
         make_pdf(PUBLIC_REPORTS / filename, pages)
+    corrected_count = 0
+    for source_patient in catalog["patients"]:
+        corrected_patient, corrected_report = corrected_companion(catalog, source_patient)
+        corrected_pages = report_pages(catalog, corrected_patient)
+        make_pdf(REPORTS / corrected_report["file"], corrected_pages)
+        make_pdf(PUBLIC_REPORTS / corrected_report["file"], corrected_pages)
+        corrected_count += 1
     (PUBLIC_REPORTS / "catalog.json").write_bytes(CATALOG_PATH.read_bytes())
-    print(f"Generated {len(catalog['patients'])} synthetic PDFs in demo/reports and lab/ui/public/demo-reports.")
+    print(f"Generated {len(catalog['patients']) + corrected_count} synthetic PDFs in demo/reports and lab/ui/public/demo-reports.")
     if args.verify:
         verify_reports(catalog)
 

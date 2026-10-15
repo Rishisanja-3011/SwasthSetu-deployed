@@ -1,24 +1,44 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Stethoscope, CheckCircle2, RefreshCw, Building2, MapPin, Award } from 'lucide-react';
+import { patientApi } from '../services/patientApi';
 
 export function DoctorConfirmScreen() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const doctor = location.state?.doctor;
+  const [storedDoctor] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('vaanidoc_pending_scan_provider') || 'null')?.entity || null; } catch { return null; }
+  });
+  const [doctor, setDoctor] = useState(location.state?.doctor || storedDoctor);
 
   useEffect(() => {
-    if (!doctor) navigate('/');
-  }, [doctor, navigate]);
+    if (doctor) return undefined;
+    const code = new URLSearchParams(location.search).get('provider');
+    if (!code) return undefined;
+    let cancelled = false;
+    patientApi.resolveCode(code).then((resolved) => {
+      if (!cancelled && resolved.type === 'DOCTOR') setDoctor(resolved.entity);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [doctor, location.search]);
 
-  if (!doctor) return null;
+  if (!doctor) {
+    return (
+      <div className="v-card" style={{ maxWidth: 520, margin: '70px auto', padding: 28, textAlign: 'center' }}>
+        <h2 style={{ color: 'var(--navy-900)', marginBottom: 8 }}>Doctor QR session expired</h2>
+        <p style={{ color: 'var(--slate-600)', marginBottom: 18 }}>The doctor details are still loading. If this page remains here, scan the doctor QR again or return to the patient homepage.</p>
+        <button type="button" className="btn btn-primary" onClick={() => navigate('/')}>Return to patient home</button>
+      </div>
+    );
+  }
 
   const handleConfirm = () => {
     navigate('/visit-type', { state: { doctor } });
   };
 
   const handleScanAgain = () => {
+    sessionStorage.removeItem('vaanidoc_pending_scan_provider');
     navigate('/');
   };
 

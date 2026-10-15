@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { QrCode, UserPlus, RefreshCw, X, ShieldCheck, Printer, Check } from 'lucide-react';
+import { QrCode, UserPlus, RefreshCw, X, ShieldCheck, Printer, Check, Download } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
 export default function LabQRModal({
@@ -37,6 +37,20 @@ export default function LabQRModal({
     if (chosen) {
       onSimulatePatient(chosen);
     }
+  };
+
+  const downloadQr = () => {
+    const svg = document.getElementById('lab-walk-in-qr-svg');
+    if (!svg) return;
+    const source = new XMLSerializer().serializeToString(svg);
+    const url = URL.createObjectURL(new Blob([source], { type: 'image/svg+xml;charset=utf-8' }));
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement('canvas'); canvas.width = 1000; canvas.height = 1000;
+      const context = canvas.getContext('2d'); context.fillStyle = '#fff'; context.fillRect(0, 0, 1000, 1000); context.drawImage(image, 0, 0, 1000, 1000);
+      const link = document.createElement('a'); link.href = canvas.toDataURL('image/png'); link.download = `laboratory-qr-${lab?.qr_code_id || 'code'}.png`; link.click(); URL.revokeObjectURL(url);
+    };
+    image.src = url;
   };
 
   return (
@@ -85,7 +99,7 @@ export default function LabQRModal({
           {/* QR Poster Simulation Card */}
           <div className="qr-poster">
             <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#64748b', fontWeight: 700 }}>
-              VaaniDoc 2.0 Registered Laboratory
+              VaaniDoc Registered Laboratory
             </div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '0.35rem 0' }}>
               {lab?.name || 'Laboratory'}
@@ -95,11 +109,12 @@ export default function LabQRModal({
             </p>
 
             <div className="qr-matrix-box">
-              <QRCodeSVG value={lab?.qr_code_id || 'LABORATORY_ID_UNAVAILABLE'} size={130} bgColor="#f8fafc" fgColor="#0f172a" level="M" includeMargin />
+              <QRCodeSVG id="lab-walk-in-qr-svg" value={`${(import.meta.env.VITE_PATIENT_APP_URL || 'http://localhost:5176').replace(/\/$/, '')}/scan/laboratory/${encodeURIComponent(lab?.qr_code_id || '')}`} size={130} bgColor="#f8fafc" fgColor="#0f172a" level="H" includeMargin />
 
               <div style={{ marginTop: '0.75rem' }}>
                 <span className="qr-code-pill">{lab?.qr_code_id || 'ID unavailable'}</span>
               </div>
+              <button type="button" className="btn-clinical outline" onClick={downloadQr} style={{ marginTop: '0.65rem' }}><Download size={14} /> Download QR (PNG)</button>
               <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.4rem' }}>
                 Patient scan code: <strong>{lab?.qr_code_id || 'ID unavailable'}</strong>
               </div>

@@ -92,7 +92,11 @@ export const doctorApi = {
   async loginDoctor(credentials) {
     const result = await request(`${AUTH_BASE}/provider/login`, {
       method: 'POST',
-      body: JSON.stringify({ ...credentials, provider_type: 'DOCTOR' }),
+      body: JSON.stringify({
+        provider_code: credentials.provider_code || credentials.doctor_code,
+        phone: credentials.phone,
+        provider_type: 'DOCTOR',
+      }),
     }, false);
     const doctor = normalizeDoctor(result.provider);
     this.setSession(result.access_token, doctor);
@@ -150,6 +154,20 @@ export const doctorApi = {
     const result = await request(`${API_BASE}/encounter/${encounterId}/end`, { method: 'POST' });
     this._syncLocalEncounterState(result.encounter);
     return result.encounter;
+  },
+
+  async downloadOriginalReport(encounterId, reportId) {
+    const token = this.getAccessToken();
+    const response = await fetch(`${API_BASE}/encounter/${encodeURIComponent(encounterId)}/reports/${encodeURIComponent(reportId)}/original`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      const error = new Error(payload.message || payload.error || 'Original report is unavailable.');
+      error.status = response.status;
+      throw error;
+    }
+    return response.blob();
   },
 
   async getNotifications(doctorId) {

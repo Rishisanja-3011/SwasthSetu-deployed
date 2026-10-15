@@ -19,6 +19,7 @@ export function WaitingRoomScreen() {
   const { activeEncounter, updateActiveEncounter, clearEncounter } = usePatient();
 
   const [currentStep, setCurrentStep] = useState(activeEncounter?.lifecycle_state || 'WAITING');
+  const [ending, setEnding] = useState(false);
 
   useEffect(() => {
     if (!activeEncounter) {
@@ -59,6 +60,20 @@ export function WaitingRoomScreen() {
   const handleFinishAndReturnHome = () => {
     clearEncounter();
     navigate('/');
+  };
+
+  const handleEndConsultation = async () => {
+    if (!window.confirm('End this consultation? The doctor access boundary will close.')) return;
+    setEnding(true);
+    try {
+      await patientApi.endEncounter(activeEncounter.id);
+      clearEncounter();
+      navigate('/');
+    } catch (error) {
+      window.alert(error.message || 'Could not end the consultation.');
+    } finally {
+      setEnding(false);
+    }
   };
 
   const isCompleted = currentStep === 'CONSULTATION_COMPLETED';
@@ -401,6 +416,11 @@ export function WaitingRoomScreen() {
                 </p>
               </div>
             </div>
+          )}
+          {!isCompleted && (
+            <button type="button" className="btn btn-secondary btn-block" onClick={handleEndConsultation} disabled={ending}>
+              {ending ? 'Ending consultation…' : 'End consultation and return to dashboard'}
+            </button>
           )}
         </div>
       </div>

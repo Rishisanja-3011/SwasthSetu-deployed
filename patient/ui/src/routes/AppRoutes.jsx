@@ -14,6 +14,7 @@ import { ReportsScreen } from '../pages/ReportsScreen';
 import { ReportDetailScreen } from '../pages/ReportDetailScreen';
 import { TimelineScreen } from '../pages/TimelineScreen';
 import { AssistantScreen } from '../pages/AssistantScreen';
+import { LandingPage } from '../pages/LandingPage';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, authLoading } = usePatient();
@@ -38,6 +39,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<PatientLoginScreen />} />
+      <Route path="/welcome" element={<LandingPage />} />
       <Route path="/scan/:providerType/:providerCode" element={<ProviderScanScreen />} />
       <Route path="/scan/:providerCode" element={<ProviderScanScreen />} />
       <Route path="/" element={<ProtectedRoute><HomeScreen /></ProtectedRoute>} />

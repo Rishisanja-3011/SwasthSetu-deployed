@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const {
   LabAccessGrant, DiagnosticOrder, DiagnosticReport, LabObservation, AuditEvent, ReportFile,
+  Encounter, Notification,
 } = require('../models');
 const { requireLabOperator, enforceActiveLabGrant } = require('../middleware/labAccess');
 const {
@@ -414,6 +415,30 @@ router.post('/report/:reportId/publish', handle(async (req, res) => {
       const result = await DiagnosticOrder.updateOne({ _id: report.diagnostic_order_id, patient_id: report.patient_id, status: 'ORDERED' }, { $set: { status: 'COMPLETED' } }, { session });
       if (result.modifiedCount !== 1) fail(409, 'DIAGNOSTIC_ORDER_NOT_AVAILABLE');
     }
+    const diagnosticOrder = report.diagnostic_order_id
+      ? await DiagnosticOrder.findOne({
+        _id: report.diagnostic_order_id,
+        patient_id: report.patient_id,
+      }).session(session)
+      : null;
+    const encounter = diagnosticOrder?.encounter_id
+      ? await Encounter.findOne({
+        _id: diagnosticOrder.encounter_id,
+        patient_id: report.patient_id,
+      }).session(session)
+      : null;
+    await Notification.create([{
+      doctor_id: diagnosticOrder?.doctor_id || null,
+      encounter_id: encounter?._id || null,
+      patient_id: report.patient_id,
+      type: 'REPORT_PUBLISHED',
+      title: `${report.test_type || 'Diagnostic'} report published`,
+      message: `Your ${report.test_type || 'diagnostic'} report from ${req.laboratory.name || 'the laboratory'} is now available to view in your patient records.`,
+      visit_type: encounter?.visit_type || null,
+      diagnostic_order_id: diagnosticOrder?._id || report.diagnostic_order_id || null,
+      report_id: report._id,
+      lab_access_grant_id: grant._id,
+    }], { session, ordered: true });
     await AuditEvent.create([
       audit(req, report, 'PUBLISH_CBC_REPORT', { sign_off_notes: typeof req.body.sign_off_notes === 'string' ? req.body.sign_off_notes.trim() : '' }),
       { actor_type: 'SYSTEM', actor_id: 'BOUNDED_ACCESS_GUARD', action: 'EXPIRE_LAB_ACCESS_GRANT', resource_type: 'LabAccessGrant', resource_id: String(grant._id), patient_id: report.patient_id, outcome: 'EXPIRED', details: { published_report_id: String(report._id) } },
