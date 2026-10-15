@@ -6,6 +6,7 @@ import PatientVisitView from './components/PatientVisitView';
 import ReportDetailView from './components/ReportDetailView';
 import LabProfileModal from './components/LabProfileModal';
 import LabLoginView from './components/LabLoginView';
+import BackgroundEffect from './components/BackgroundEffect';
 
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -501,16 +502,20 @@ export default function App() {
   // If user is logged out, render Screen #1: Lab Login
   if (!isLoggedIn) {
     return (
-      <LabLoginView
-        lab={lab}
-        onLogin={handleLabLogin}
-        onRegister={handleLabRegister}
-      />
+      <div className="landing-page-wrap" style={{ minHeight: '100vh', position: 'relative' }}>
+        <BackgroundEffect />
+        <LabLoginView
+          lab={lab}
+          onLogin={handleLabLogin}
+          onRegister={handleLabRegister}
+        />
+      </div>
     );
   }
 
   return (
     <div className="app-shell">
+      <BackgroundEffect />
       {/* Top Navigation Bar */}
       <LabNavbar
           lab={lab}
@@ -544,6 +549,7 @@ export default function App() {
             <LabDashboardView
               metrics={metrics}
               worklist={worklist}
+              reports={allReportsList}
               onOpenPatientVisit={handleOpenPatientVisit}
               onOpenReport={handleOpenReport}
               onRefresh={() => loadDashboard()}

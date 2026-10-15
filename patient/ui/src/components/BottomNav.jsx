@@ -1,9 +1,19 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { QrCode, FileText, Clock, MessageSquareHeart } from 'lucide-react';
 import './BottomNav.css';
+import { useMediBotIntro } from '../context/MediBotIntroContext';
 
 export function BottomNav() {
+  const location = useLocation();
+  const { triggerMediBotIntro } = useMediBotIntro();
+  const handleAssistantClick = (event) => {
+    if (location.pathname !== '/assistant') {
+      event.preventDefault();
+      triggerMediBotIntro();
+    }
+  };
+
   return (
     <nav className="patient-bottom-nav" aria-label="Patient navigation">
       <NavLink
@@ -33,6 +43,7 @@ export function BottomNav() {
 
       <NavLink
         to="/assistant"
+        onClick={handleAssistantClick}
         className={({ isActive }) => `nav-tab-item ${isActive ? 'active' : ''}`}
       >
         <MessageSquareHeart className="nav-tab-icon" />

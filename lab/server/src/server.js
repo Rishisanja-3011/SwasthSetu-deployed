@@ -27,7 +27,7 @@ app.use('/api/patient', patientRoutes);
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ONLINE',
-    system: 'VaaniDoc 2.0 - Lab Module API & Bounded Access Guard',
+    system: 'VaaniDoc - Lab Module API & Bounded Access Guard',
     timestamp: new Date(),
   });
 });
@@ -37,7 +37,7 @@ async function startServer() {
   await connectDB();
   app.listen(PORT, () => {
     console.log(`=======================================================`);
-    console.log(`  VaaniDoc 2.0 Lab Module Server running on port ${PORT}`);
+  console.log(`  VaaniDoc Lab Module Server running on port ${PORT}`);
     console.log(`  API Base: http://localhost:${PORT}/api/lab`);
     console.log(`  Health Check: http://localhost:${PORT}/api/health`);
     console.log(`=======================================================`);

@@ -16,6 +16,7 @@ export const DoctorLoginScreen = () => {
 
   const { login, register, loading, error } = useDoctorAuth();
   const navigate = useNavigate();
+  const publicSite = `${(import.meta.env.VITE_LANDING_APP_URL || 'http://localhost:5174').replace(/\/$/, '')}/`;
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -83,6 +84,7 @@ export const DoctorLoginScreen = () => {
             Doctor-Specific Queue • Dual Clinical Intake • Bounded Access
           </p>
         </div>
+        <a href={publicSite} style={{ display: 'block', textAlign: 'center', color: 'var(--teal-700)', fontSize: '0.78rem', fontWeight: 700, marginBottom: 14 }}>← About VaaniDoc</a>
 
         {/* Tab Toggle */}
         <div style={{

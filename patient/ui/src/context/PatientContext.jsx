@@ -24,7 +24,11 @@ export function PatientProvider({ children }) {
 
       try {
         const restoredPatient = await patientApi.getCurrentProfile();
-        if (!cancelled) setPatient(restoredPatient);
+        const restoredEncounter = await patientApi.getActiveEncounterFromServer().catch(() => patientApi.getActiveEncounter());
+        if (!cancelled) {
+          setPatient(restoredPatient);
+          setActiveEncounter(restoredEncounter);
+        }
       } catch (error) {
         patientApi.clearSession();
         if (!cancelled) {
@@ -85,6 +89,7 @@ export function PatientProvider({ children }) {
     setAuthError(null);
     setAuthLoading(false);
     setRefreshTrigger((value) => value + 1);
+    patientApi.getActiveEncounterFromServer().then(setActiveEncounter).catch(() => {});
   };
 
   const logout = () => {

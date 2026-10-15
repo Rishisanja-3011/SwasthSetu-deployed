@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Stethoscope, LogOut, ShieldCheck, ChevronDown, Bell } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Stethoscope, LogOut, ShieldCheck, ChevronDown, Bell, Menu, X, ClipboardList, FileText } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useDoctorAuth } from '../context/DoctorAuthContext';
 import { DoctorProfileDropdown } from './DoctorProfileDropdown';
 import { NotificationDropdown } from './NotificationDropdown';
@@ -9,7 +9,9 @@ export const DoctorNavbar = () => {
   const { doctor, logout, unreadCount } = useDoctorAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -62,7 +64,7 @@ export const DoctorNavbar = () => {
               letterSpacing: '-0.02em',
               lineHeight: 1.1,
             }}>
-              VaaniDoc <span style={{ color: 'var(--teal-500)', fontSize: '0.82rem', fontWeight: 700, padding: '2px 6px', background: 'var(--teal-50)', borderRadius: 6 }}>DOCTOR 2.0</span>
+               VaaniDoc
             </div>
             <div style={{ fontSize: '0.78rem', color: 'var(--slate-500)', fontWeight: 500 }}>
               {doctor?.clinic_name || 'Mehta Community Health Clinic'}
@@ -73,6 +75,15 @@ export const DoctorNavbar = () => {
 
       {/* Controls & Interactive Doctor Profile (Right) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        {location.pathname.startsWith('/cockpit/') && <div style={{ position: 'relative' }}>
+          <button type="button" onClick={() => setIsMenuOpen((open) => !open)} aria-label="Open doctor workspace menu" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 10px', border: '1px solid var(--border-medium)', borderRadius: 9, background: '#fff', color: 'var(--navy-900)', cursor: 'pointer' }}>
+            {isMenuOpen ? <X size={18} /> : <Menu size={18} />} <span style={{ fontSize: '0.78rem', fontWeight: 700 }}>Workspace</span>
+          </button>
+          {isMenuOpen && <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 190, padding: 6, background: '#fff', border: '1px solid var(--border-medium)', borderRadius: 12, boxShadow: 'var(--shadow-lg)', zIndex: 200 }}>
+            <button type="button" onClick={() => { setIsMenuOpen(false); navigate('/'); }} style={{ display: 'flex', gap: 8, width: '100%', padding: '10px 9px', border: 0, background: 'transparent', textAlign: 'left', cursor: 'pointer', color: 'var(--navy-900)' }}><ClipboardList size={16} /> Consultations</button>
+            <button type="button" onClick={() => { setIsMenuOpen(false); document.getElementById('doctor-reports')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ display: 'flex', gap: 8, width: '100%', padding: '10px 9px', border: 0, background: 'transparent', textAlign: 'left', cursor: 'pointer', color: 'var(--navy-900)' }}><FileText size={16} /> Reports</button>
+          </div>}
+        </div>}
         {/* Bounded Access Assurance Indicator */}
         <div style={{
           display: 'flex',

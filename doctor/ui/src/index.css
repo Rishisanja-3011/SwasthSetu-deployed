@@ -87,11 +87,18 @@
   --radius-full: 9999px;
 }
 
+/* VaaniDoc visual refresh: preserve clinical behavior while matching the
+   soft aqua/neomorphic doctor_2.0 presentation. */
+.v-card { border-radius: 20px; border-color: rgba(255,255,255,.85); box-shadow: 6px 6px 16px rgba(150,185,198,.28), -6px -6px 16px rgba(255,255,255,.92); }
+.btn-primary, .btn-teal { border-radius: 12px; box-shadow: 0 8px 22px rgba(34,146,160,.24); }
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
+
+body { background: #ebf5f8; }
 
 body {
   font-family: var(--font-family);

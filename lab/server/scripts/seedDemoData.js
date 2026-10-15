@@ -180,7 +180,17 @@ async function ensureExact(model, filter, fields, label) {
 }
 
 async function resetOwnedFixture({ models, patient, laboratory, order, grant }) {
-  const { LabObservation, ReportFile, DiagnosticReport, LabAccessGrant, DiagnosticOrder, Encounter } = models;
+  const {
+    LabObservation,
+    ReportFile,
+    DiagnosticReport,
+    LabAccessGrant,
+    DiagnosticOrder,
+    Encounter,
+    SymptomIntake,
+    ConsultationNote,
+    Notification,
+  } = models;
   const reports = await DiagnosticReport.find({
     _id: { $in: grant.report_id || grant.published_report_id ? [grant.report_id || grant.published_report_id] : [] },
     patient_id: patient._id,
@@ -206,8 +216,26 @@ async function resetOwnedFixture({ models, patient, laboratory, order, grant }) 
   );
   await Encounter.updateOne(
     { _id: order.encounter_id, patient_id: patient._id, doctor_id: order.doctor_id },
-    { $set: { status: 'OPEN', queue_status: 'IN_CONSULTATION' } },
+    { $set: { status: 'OPEN', queue_status: 'INTAKE_PENDING' } },
   );
+  await SymptomIntake.updateOne(
+    { encounter_id: order.encounter_id, patient_id: patient._id },
+    { $set: {
+      input_mode: 'TEXT',
+      transcript: '',
+      chief_complaint: '',
+      duration: '',
+      symptoms: [],
+      structured_data: {},
+      patient_confirmed: false,
+      patient_confirmed_at: null,
+      confirmed_at: null,
+      extraction_status: 'READY',
+      updated_at: new Date(),
+    } },
+  );
+  await ConsultationNote.deleteMany({ encounter_id: order.encounter_id });
+  await Notification.deleteMany({ patient_id: patient._id, encounter_id: order.encounter_id });
 }
 
 async function seedDemoData({
@@ -237,7 +265,7 @@ async function seedDemoData({
     const patientUser = await ensureUser(models.User, definition, 'PATIENT', `patient-user-${definition.identifier}`);
     const patient = await ensurePatient(models.Patient, definition, patientUser);
     const encounter = await ensureExact(models.Encounter,
-      { patient_id: patient._id, doctor_id: doctor._id },
+      { patient_id: patient._id, doctor_id: doctor._id, visit_type: 'NEW' },
       { _id: fixtureObjectId(`encounter-${definition.identifier}`), patient_id: patient._id, doctor_id: doctor._id, visit_type: 'NEW', status: 'OPEN', queue_status: 'IN_CONSULTATION', queue_number: 1 },
       `encounter ${definition.identifier}`);
     await ensureExact(models.SymptomIntake, { encounter_id: encounter._id }, {

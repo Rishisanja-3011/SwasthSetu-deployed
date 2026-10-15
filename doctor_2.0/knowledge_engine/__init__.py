@@ -1,3 +1,0 @@
-"""
-Clinical Reasoning Engine
-"""

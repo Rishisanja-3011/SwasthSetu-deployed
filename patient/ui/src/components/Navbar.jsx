@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Activity, ChevronDown, User, ShieldCheck, QrCode, FileText, Clock, MessageSquareHeart } from 'lucide-react';
 import { usePatient } from '../context/PatientContext';
 import { PatientSwitcherModal } from './PatientSwitcherModal';
 import { PatientNotificationBell } from './PatientNotificationBell';
 import './Navbar.css';
+import { useMediBotIntro } from '../context/MediBotIntroContext';
 
 export function Navbar() {
-  const { patient } = usePatient();
+  const { patient, activeEncounter } = usePatient();
   const [showSwitcher, setShowSwitcher] = useState(false);
+  const location = useLocation();
+  const { triggerMediBotIntro } = useMediBotIntro();
+  const handleAssistantClick = (event) => {
+    if (location.pathname !== '/assistant') {
+      event.preventDefault();
+      triggerMediBotIntro();
+    }
+  };
 
   return (
     <>
@@ -56,11 +65,21 @@ export function Navbar() {
 
             <NavLink
               to="/assistant"
+              onClick={handleAssistantClick}
               className={({ isActive }) => `desktop-nav-link ${isActive ? 'active' : ''}`}
             >
               <MessageSquareHeart size={16} />
               <span>Assistant</span>
             </NavLink>
+            {activeEncounter?.status === 'OPEN' && (
+              <NavLink
+                to="/waiting"
+                className={({ isActive }) => `desktop-nav-link ongoing-consultation-link ${isActive ? 'active' : ''}`}
+              >
+                <Activity size={16} />
+                <span>Ongoing consultation</span>
+              </NavLink>
+            )}
           </nav>
 
           <div className="navbar-right">

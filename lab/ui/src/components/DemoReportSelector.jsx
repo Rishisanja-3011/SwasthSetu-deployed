@@ -91,9 +91,14 @@ export function DemoReportSelector({ identity, onSelect }) {
   if (!enabled) return null;
 
   const matchingPatients = catalog?.patients?.filter((patient) => matchesGrantedIdentity(patient, identity)) || [];
+  const matchingReports = matchingPatients.flatMap((patient) => [
+    { patient, report: patient.report },
+    ...(patient.report.correctedReport
+      ? [{ patient, report: { ...patient.report.correctedReport, scenario: 'corrected-companion' } }]
+      : []),
+  ]);
 
-  const choose = async (patient) => {
-    const report = patient.report;
+  const choose = async (patient, report) => {
     if (!report?.file) return;
 
     fileRequestRef.current?.abort();
@@ -144,15 +149,14 @@ export function DemoReportSelector({ identity, onSelect }) {
         </p>
       )}
 
-      {!loadingCatalog && matchingPatients.length > 0 && (
-        <div style={{ display: 'grid', gap: 6 }}>
-          {matchingPatients.map((patient) => {
-            const report = patient.report;
+       {!loadingCatalog && matchingReports.length > 0 && (
+         <div style={{ display: 'grid', gap: 6 }}>
+           {matchingReports.map(({ patient, report }) => {
             return (
               <button
-                key={patient.identifier || report.file}
+                 key={`${patient.identifier || 'fixture'}-${report.file}`}
                 type="button"
-                onClick={() => choose(patient)}
+                 onClick={() => choose(patient, report)}
                 disabled={Boolean(loadingFile)}
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, border: '1px solid #fcd34d', borderRadius: 7, padding: '0.45rem 0.6rem', background: '#fff', color: '#78350f', cursor: 'pointer', textAlign: 'left' }}
               >

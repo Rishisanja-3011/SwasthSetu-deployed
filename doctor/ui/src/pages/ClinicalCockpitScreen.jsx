@@ -183,7 +183,7 @@ export const ClinicalCockpitScreen = () => {
           </h2>
 
           <p style={{ fontSize: '0.9rem', color: 'var(--slate-600)', lineHeight: 1.6, maxWidth: 460, margin: '0 auto 20px auto' }}>
-            Under the VaaniDoc 2.0 Bounded Access model, active physician query access terminates automatically once the consultation ends.
+             Under the VaaniDoc Bounded Access model, active physician query access terminates automatically once the consultation ends.
           </p>
 
           <div style={{
@@ -385,6 +385,7 @@ export const ClinicalCockpitScreen = () => {
       {/* CASE A: REVISITING -> Shows prior notes by this doctor + all published reports */}
       {isRevisiting && (
         <RevisitingHistorySection
+          encounterId={encounterId}
           priorNotes={priorNotes}
           priorIntakes={priorIntakes}
           publishedReports={publishedReports}

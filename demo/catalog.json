@@ -28,6 +28,7 @@
         "file": "demo-cbc-normal.pdf", "sampleId": "DEMO-CBC-001", "scenario": "normal",
         "label": "Normal CBC", "description": "Complete synthetic panel; ready for review and publication.",
         "values": [14.8, 5.1, 45, 88, 29, 33, 13.2, 7200, 60, 30, 3, 6, 1, 250000],
+        "correctedReport": { "file": "demo-cbc-normal-corrected.pdf", "label": "Corrected Normal CBC", "description": "Upload-ready complete synthetic companion." },
         "expectedOutcome": { "validationStatus": "VALID", "coverageStatus": "COMPLETE", "testsDetected": 14, "observations": 14, "uploadStatus": "PROCESSING", "publishEligible": true, "reviewMarkers": [], "flags": {} }
       }
     },
@@ -38,6 +39,7 @@
         "label": "Plausibility review CBC", "description": "Platelets 15; synthetic analyzer evidence supports manual correction to 250000.",
         "values": [12.9, 4.7, 40, 85, 28, 33, 13.5, 6800, 58, 32, 4, 5, 1, 15],
         "correctionEvidence": { "marker": "platelets", "value": 250000, "unit": "/cmm", "note": "Synthetic analyzer rerun; use only for manual review of this fixture." },
+        "correctedReport": { "file": "demo-cbc-needs-review-corrected.pdf", "label": "Corrected plausibility-review CBC", "description": "Companion synthetic panel with platelets corrected to 250000." },
         "expectedOutcome": { "validationStatus": "VALID", "coverageStatus": "COMPLETE", "testsDetected": 14, "observations": 14, "uploadStatus": "NEEDS_REVIEW", "publishEligible": false, "reviewMarkers": ["platelets"], "flags": { "platelets": "LOW" } }
       }
     },
@@ -47,6 +49,7 @@
         "file": "demo-cbc-incomplete.pdf", "sampleId": "DEMO-CBC-003", "scenario": "incomplete",
         "label": "Incomplete CBC", "description": "Eight markers only; incomplete coverage blocks publication.",
         "values": [13.8, 4.8, 42, 87, 29, 33, null, 6100, null, null, null, null, null, 220000],
+        "correctedReport": { "file": "demo-cbc-incomplete-corrected.pdf", "label": "Corrected Complete CBC", "description": "Upload-ready complete synthetic companion." },
         "expectedOutcome": { "validationStatus": "VALID", "coverageStatus": "INCOMPLETE", "testsDetected": 8, "observations": 8, "uploadStatus": "NEEDS_REVIEW", "publishEligible": false, "reviewMarkers": [], "flags": {} }
       }
     },
@@ -56,6 +59,7 @@
         "file": "demo-cbc-normal-asha.pdf", "sampleId": "DEMO-CBC-004", "scenario": "another-normal",
         "label": "Normal CBC - Asha", "description": "Second complete synthetic normal panel with matching female metadata.",
         "values": [13.6, 4.6, 41, 89, 29.5, 33.2, 12.8, 5900, 56, 34, 3, 6, 1, 285000],
+        "correctedReport": { "file": "demo-cbc-normal-asha-corrected.pdf", "label": "Corrected Normal CBC - Asha", "description": "Upload-ready complete synthetic companion." },
         "expectedOutcome": { "validationStatus": "VALID", "coverageStatus": "COMPLETE", "testsDetected": 14, "observations": 14, "uploadStatus": "PROCESSING", "publishEligible": true, "reviewMarkers": [], "flags": {} }
       }
     },
@@ -65,6 +69,7 @@
         "file": "demo-cbc-high-low.pdf", "sampleId": "DEMO-CBC-005", "scenario": "high-low-plausible",
         "label": "Plausible HIGH / LOW CBC", "description": "Out-of-reference values within plausibility bounds; flags alone do not block publication.",
         "values": [11.2, 4.1, 35, 85, 27.3, 32, 15.2, 12500, 76, 17, 1, 5, 1, 130000],
+        "correctedReport": { "file": "demo-cbc-high-low-corrected.pdf", "label": "Corrected Plausible CBC", "description": "Upload-ready complete synthetic companion." },
         "expectedOutcome": { "validationStatus": "VALID", "coverageStatus": "COMPLETE", "testsDetected": 14, "observations": 14, "uploadStatus": "PROCESSING", "publishEligible": true, "reviewMarkers": [], "flags": { "hemoglobin": "LOW", "rbc": "LOW", "hematocrit": "LOW", "rdw": "HIGH", "wbc": "HIGH", "neutrophils": "HIGH", "lymphocytes": "LOW", "platelets": "LOW" } }
       }
     },
@@ -75,6 +80,7 @@
         "label": "Missing reference negative case", "description": "Hemoglobin has no source reference range; partial validation blocks publication.",
         "values": [13.4, 4.5, 40, 88, 29.8, 33.5, 13, 6400, 59, 31, 3, 6, 1, 240000],
         "missingReferences": ["hemoglobin"],
+        "correctedReport": { "file": "demo-cbc-missing-reference-corrected.pdf", "label": "Corrected Reference CBC", "description": "Upload-ready complete synthetic companion with all reference intervals." },
         "expectedOutcome": { "validationStatus": "PARTIAL", "coverageStatus": "COMPLETE", "testsDetected": 14, "observations": 13, "uploadStatus": "NEEDS_REVIEW", "publishEligible": false, "reviewMarkers": [], "flags": {} }
       }
     }

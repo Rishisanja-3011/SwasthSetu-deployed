@@ -49,6 +49,12 @@ labelled training evidence and is formatted as instrument metadata. It is not
 a second CBC row, so extraction should produce one platelet observation with
 value `15` until the operator manually corrects that observation.
 
+The generator also creates one `*-corrected.pdf` companion for every patient.
+Each companion preserves the matching patient identity and contains a complete
+synthetic CBC with the source review defects corrected. These are not extra
+patients; use the matching companion only after resetting that patient grant or
+on a fresh grant.
+
 ## Generate and verify PDFs
 
 From the repository root, use the configured Windows Python runtime when it is
@@ -134,6 +140,13 @@ existing records.
    matching synthetic patient with phone + terminal OTP to view the report.
 7. Confirm that publication expires only that lab grant and completes only
    that diagnostic order.
+
+To demonstrate uploading a corrected PDF instead of using **Fix & Verify**, run
+`npm run demo:reset`, open the matching patient visit, and choose the matching
+**Corrected** entry in the enabled synthetic selector. The files are also
+available directly under `demo/reports/` as `*-corrected.pdf`. Do not upload a
+corrected companion on a grant that already contains a report:
+`REPORT_ALREADY_UPLOADED` is the intentional immutable-audit response.
 
 After a report has been published, a normal seed rerun intentionally keeps the
 grant expired and order completed. To prepare the exact six fixture resources

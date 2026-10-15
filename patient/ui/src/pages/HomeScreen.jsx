@@ -107,7 +107,7 @@ export function HomeScreen() {
         <p>
           Connect with your doctor, describe symptoms in your language, and keep your health records close.
         </p>
-        {activeEncounter?.status === 'OPEN' && activeEncounter?.intake?.patient_confirmed && (
+        {activeEncounter?.status === 'OPEN' && (
           <button className="btn btn-outline-teal home-resume" onClick={() => navigate('/waiting')}>
             <Activity size={16} /> Return to your active visit <ArrowRight size={16} />
           </button>

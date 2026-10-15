@@ -1,11 +1,14 @@
 import React from 'react';
 import { Printer, Download, Sparkles, MapPin, CheckCircle, Shield } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 export const PrintableQRStandee = ({ doctor }) => {
   const doctorName = doctor?.name || 'Dr. Ramesh Mehta';
   const doctorCode = doctor?.doctor_code || doctor?.qr_code_id || 'DOC-409';
   const clinicName = doctor?.clinic_name || 'Mehta Community Health Clinic';
   const specialty = doctor?.specialty || 'General Physician & Family Medicine';
+  const patientOrigin = import.meta.env.VITE_PATIENT_APP_URL || 'http://localhost:5176';
+  const scanUrl = `${patientOrigin.replace(/\/$/, '')}/scan/doctor/${encodeURIComponent(doctorCode)}`;
 
   const handlePrint = () => {
     window.print();
@@ -76,7 +79,7 @@ export const PrintableQRStandee = ({ doctor }) => {
             marginBottom: 8,
           }}>
             <Sparkles size={13} />
-            VaaniDoc 2.0 Connected Clinic
+             VaaniDoc Connected Clinic
           </div>
 
           <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--navy-900)', margin: '4px 0' }}>
@@ -100,59 +103,9 @@ export const PrintableQRStandee = ({ doctor }) => {
           border: '2px solid var(--slate-200)',
           boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
         }}>
-          {/* High-Resolution Standee QR representation */}
-          <svg viewBox="0 0 160 160" width="100%" height="100%" style={{ display: 'block' }}>
-            <rect width="160" height="160" fill="#ffffff" />
-            {/* Corner Markers */}
-            <rect x="10" y="10" width="40" height="40" fill="#0a2540" rx="4" />
-            <rect x="16" y="16" width="28" height="28" fill="#ffffff" rx="2" />
-            <rect x="22" y="22" width="16" height="16" fill="#00a884" rx="2" />
-
-            <rect x="110" y="10" width="40" height="40" fill="#0a2540" rx="4" />
-            <rect x="116" y="16" width="28" height="28" fill="#ffffff" rx="2" />
-            <rect x="122" y="22" width="16" height="16" fill="#00a884" rx="2" />
-
-            <rect x="10" y="110" width="40" height="40" fill="#0a2540" rx="4" />
-            <rect x="16" y="116" width="28" height="28" fill="#ffffff" rx="2" />
-            <rect x="22" y="122" width="16" height="16" fill="#00a884" rx="2" />
-
-            {/* Data matrix pattern */}
-            <rect x="60" y="15" width="8" height="16" fill="#0a2540" />
-            <rect x="75" y="20" width="16" height="8" fill="#0a2540" />
-            <rect x="95" y="15" width="8" height="8" fill="#0a2540" />
-
-            <rect x="60" y="45" width="40" height="8" fill="#0a2540" />
-            <rect x="15" y="60" width="20" height="8" fill="#0a2540" />
-            <rect x="45" y="60" width="12" height="12" fill="#00a884" />
-            <rect x="65" y="60" width="30" height="30" fill="#0a2540" rx="4" />
-            <rect x="105" y="60" width="15" height="8" fill="#0a2540" />
-            <rect x="130" y="60" width="15" height="15" fill="#0a2540" />
-
-            <rect x="20" y="80" width="15" height="8" fill="#0a2540" />
-            <rect x="45" y="80" width="8" height="20" fill="#0a2540" />
-            <rect x="110" y="80" width="10" height="20" fill="#0a2540" />
-            <rect x="130" y="85" width="15" height="8" fill="#0a2540" />
-
-            <rect x="60" y="100" width="10" height="10" fill="#0a2540" />
-            <rect x="80" y="100" width="15" height="15" fill="#00a884" />
-            <rect x="105" y="105" width="20" height="8" fill="#0a2540" />
-            <rect x="135" y="105" width="10" height="15" fill="#0a2540" />
-
-            <rect x="60" y="125" width="20" height="8" fill="#0a2540" />
-            <rect x="90" y="125" width="15" height="15" fill="#0a2540" />
-            <rect x="115" y="125" width="10" height="8" fill="#0a2540" />
-            <rect x="135" y="130" width="12" height="12" fill="#0a2540" />
-
-            <rect x="60" y="140" width="10" height="10" fill="#0a2540" />
-            <rect x="75" y="140" width="8" height="10" fill="#0a2540" />
-            <rect x="115" y="140" width="25" height="8" fill="#00a884" />
-
-            {/* Center Doctor Tag Badge */}
-            <circle cx="80" cy="80" r="16" fill="#ffffff" />
-            <circle cx="80" cy="80" r="13" fill="#0a2540" />
-            <text x="80" y="84" fill="#ffffff" fontSize="9" fontWeight="bold" textAnchor="middle">DOC</text>
-          </svg>
+          <QRCodeSVG value={scanUrl} size={208} bgColor="#ffffff" fgColor="#0a2540" level="H" includeMargin />
         </div>
+        <div style={{ marginBottom: 16, fontSize: '0.72rem', color: 'var(--slate-500)', wordBreak: 'break-all' }}>{scanUrl}</div>
 
         {/* Scan Callout */}
         <div style={{

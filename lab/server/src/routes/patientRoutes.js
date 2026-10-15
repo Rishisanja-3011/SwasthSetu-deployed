@@ -129,6 +129,40 @@ async function getOwnedOpenEncounter(req, patient) {
   });
 }
 
+async function getOpenPatientEncounter(patient) {
+  if (!patient) return null;
+  return Encounter.findOne({
+    patient_id: patient._id,
+    status: 'OPEN',
+  })
+    .populate('doctor_id')
+    .sort({ created_at: -1 });
+}
+
+function patientEncounterPayload(encounter, patient, fallbackDoctor = null) {
+  const populatedDoctor = encounter.doctor_id && encounter.doctor_id.name
+    ? encounter.doctor_id
+    : null;
+  const doctor = populatedDoctor || fallbackDoctor;
+  return {
+    id: encounter._id,
+    _id: encounter._id,
+    patient_id: patient._id,
+    doctor_id: doctor?._id || encounter.doctor_id,
+    doctor_name: doctor?.name,
+    clinic_name: doctor?.clinic_name,
+    doctor_code: doctor?.qr_code_id,
+    visit_type: encounter.visit_type,
+    status: encounter.status,
+    queue_status: encounter.queue_status,
+    lifecycle_state: lifecycleState(encounter),
+    queue_number: encounter.queue_number,
+    created_at: encounter.created_at,
+    started_at: encounter.started_at,
+    ended_at: encounter.ended_at,
+  };
+}
+
 async function savePreparedIntake({ req, patient, encounter, inputMode, structuredData, audioDeleted = false }) {
   const owner = { encounter_id: encounter._id, patient_id: patient._id };
   const existing = await SymptomIntake.findOne(owner);
@@ -537,7 +571,7 @@ router.get('/notifications', async (req, res) => {
   try {
     const patient = await getAuthenticatedPatient(req);
     if (!patient) return res.status(404).json({ success: false, error: 'PATIENT_PROFILE_NOT_FOUND' });
-    const filter = { patient_id: patient._id, type: 'DIAGNOSTIC_ORDER_CREATED' };
+    const filter = { patient_id: patient._id };
     const notifications = await Notification.find(filter)
       .populate('doctor_id', 'name specialty clinic_name')
       .populate('diagnostic_order_id', 'test_type clinical_notes status created_at')
@@ -560,7 +594,7 @@ router.post('/notifications/:notificationId/read', async (req, res) => {
       return res.status(404).json({ success: false, error: 'NOTIFICATION_NOT_FOUND' });
     }
     const notification = await Notification.findOneAndUpdate(
-      { _id: req.params.notificationId, patient_id: patient._id, type: 'DIAGNOSTIC_ORDER_CREATED' },
+      { _id: req.params.notificationId, patient_id: patient._id },
       { read: true },
       { new: true },
     );
@@ -575,7 +609,7 @@ router.post('/notifications/read-all', async (req, res) => {
   try {
     const patient = await getAuthenticatedPatient(req);
     if (!patient) return res.status(404).json({ success: false, error: 'PATIENT_PROFILE_NOT_FOUND' });
-    await Notification.updateMany({ patient_id: patient._id, type: 'DIAGNOSTIC_ORDER_CREATED', read: false }, { read: true });
+    await Notification.updateMany({ patient_id: patient._id, read: false }, { read: true });
     return res.json({ success: true });
   } catch (error) {
     return res.status(500).json({ success: false, error: 'PATIENT_NOTIFICATION_UPDATE_FAILED' });
@@ -585,8 +619,18 @@ router.post('/notifications/read-all', async (req, res) => {
 router.post('/encounters', async (req, res) => {
   try {
     const patient = await getAuthenticatedPatient(req);
-    const provider = await resolveProvider(req.body.doctor_code);
     if (!patient) return res.status(404).json({ success: false, error: 'PATIENT_PROFILE_NOT_FOUND' });
+
+    const ongoing = await getOpenPatientEncounter(patient);
+    if (ongoing) {
+      return res.status(409).json({
+        success: false,
+        error: 'ONGOING_CONSULTATION',
+        encounter: patientEncounterPayload(ongoing, patient),
+      });
+    }
+
+    const provider = await resolveProvider(req.body.doctor_code);
     if (!provider || provider.provider_type !== 'DOCTOR') {
       return res.status(400).json({ success: false, error: 'DOCTOR_NOT_FOUND' });
     }
@@ -594,25 +638,15 @@ router.post('/encounters', async (req, res) => {
       return res.status(400).json({ success: false, error: 'INVALID_VISIT_TYPE' });
     }
 
-    let encounter = await Encounter.findOne({
+    const encounter = await Encounter.create({
       patient_id: patient._id,
       doctor_id: provider.provider_id,
       visit_type: req.body.visit_type,
       status: 'OPEN',
-      queue_status: { $in: ['INTAKE_PENDING', 'WAITING', 'DOCTOR_REVIEWING', 'CALLED', 'IN_CONSULTATION'] },
-    }).sort({ created_at: -1 });
-    const reusedEncounter = Boolean(encounter);
-    if (!encounter) {
-      encounter = await Encounter.create({
-        patient_id: patient._id,
-        doctor_id: provider.provider_id,
-        visit_type: req.body.visit_type,
-        status: 'OPEN',
-        queue_status: 'INTAKE_PENDING',
-      });
-    }
+      queue_status: 'INTAKE_PENDING',
+    });
 
-    if (!reusedEncounter) await AuditEvent.create({
+    await AuditEvent.create({
       actor_type: 'PATIENT',
       actor_id: patient._id.toString(),
       action: 'PATIENT_OPENED_DOCTOR_ENCOUNTER',
@@ -625,24 +659,84 @@ router.post('/encounters', async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      encounter: {
-        id: encounter._id,
-        _id: encounter._id,
-        patient_id: patient._id,
-        doctor_id: provider.provider_id,
-        doctor_name: provider.provider.name,
-        clinic_name: provider.provider.clinic_name,
-        doctor_code: provider.provider_code,
-        visit_type: encounter.visit_type,
-        status: encounter.status,
-        lifecycle_state: lifecycleState(encounter),
-        queue_number: encounter.queue_number,
-        created_at: encounter.created_at,
-      },
+      encounter: patientEncounterPayload(encounter, patient, provider.provider),
     });
   } catch (error) {
+    if (error.code === 11000) {
+      const patient = await getAuthenticatedPatient(req).catch(() => null);
+      const ongoing = await getOpenPatientEncounter(patient).catch(() => null);
+      if (patient && ongoing) {
+        return res.status(409).json({
+          success: false,
+          error: 'ONGOING_CONSULTATION',
+          encounter: patientEncounterPayload(ongoing, patient),
+        });
+      }
+    }
     console.error('Patient encounter creation error:', error);
     return res.status(500).json({ success: false, error: 'ENCOUNTER_CREATE_FAILED' });
+  }
+});
+
+router.get('/active-encounter', async (req, res) => {
+  try {
+    const patient = await getAuthenticatedPatient(req);
+    if (!patient) return res.status(404).json({ success: false, error: 'PATIENT_PROFILE_NOT_FOUND' });
+    const encounter = await getOpenPatientEncounter(patient);
+    return res.json({
+      success: true,
+      encounter: encounter ? patientEncounterPayload(encounter, patient) : null,
+    });
+  } catch (error) {
+    console.error('Patient active encounter lookup error:', error);
+    return res.status(500).json({ success: false, error: 'ACTIVE_ENCOUNTER_LOOKUP_FAILED' });
+  }
+});
+
+router.post('/encounters/:encounterId/end', async (req, res) => {
+  try {
+    const patient = await getAuthenticatedPatient(req);
+    if (!patient || !isValidObjectId(req.params.encounterId)) {
+      return res.status(404).json({ success: false, error: 'ENCOUNTER_NOT_FOUND' });
+    }
+    const encounter = await Encounter.findOne({
+      _id: req.params.encounterId,
+      patient_id: patient._id,
+    }).populate('doctor_id');
+    if (!encounter) return res.status(404).json({ success: false, error: 'ENCOUNTER_NOT_FOUND' });
+    if (encounter.status === 'CLOSED') {
+      return res.status(409).json({ success: false, error: 'ENCOUNTER_ALREADY_CLOSED' });
+    }
+
+    encounter.status = 'CLOSED';
+    encounter.ended_at = new Date();
+    await encounter.save();
+    await SymptomIntake.updateMany(
+      { encounter_id: encounter._id, patient_id: patient._id },
+      { $set: { audio_deleted: true } },
+    );
+    await AuditEvent.create({
+      actor_type: 'PATIENT',
+      actor_id: patient._id.toString(),
+      action: 'CONSULTATION_ENDED_BOUNDED_ACCESS_TERMINATED',
+      resource_type: 'Encounter',
+      resource_id: encounter._id.toString(),
+      patient_id: patient._id,
+      outcome: 'SUCCESS',
+      details: {
+        ended_at: encounter.ended_at,
+        raw_audio_deleted: true,
+        retained: ['transcript', 'structured_intake', 'consultation_notes', 'audit_ledger'],
+      },
+    });
+
+    return res.json({
+      success: true,
+      encounter: patientEncounterPayload(encounter, patient),
+    });
+  } catch (error) {
+    console.error('Patient end consultation error:', error);
+    return res.status(500).json({ success: false, error: 'PATIENT_END_FAILED' });
   }
 });
 

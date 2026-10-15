@@ -36,7 +36,9 @@ export function PatientNotificationBell() {
     setNotifications((items) => items.map((item) => (String(item._id) === String(id) ? { ...item, read: true } : item)));
     if (notification.encounter_id) {
       setOpen(false);
-      navigate(`/timeline?consultation=${encodeURIComponent(notification.encounter_id)}`);
+      navigate(notification.report_id
+        ? `/report/${encodeURIComponent(notification.report_id)}`
+        : `/timeline?consultation=${encodeURIComponent(notification.encounter_id)}`);
     }
   };
   const markAll = async () => {

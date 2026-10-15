@@ -77,10 +77,10 @@ export function TimelineScreen() {
     </header>
     {loading ? <div className="consultation-empty" role="status">Loading your consultations…</div> : error ? <div className="consultation-empty" role="alert"><p>{error}</p><button className="btn btn-primary" onClick={() => setReload((v) => v + 1)}>Try again</button></div> : consultations.length === 0 ? <div className="consultation-empty"><CalendarDays size={34} /><h2>Your first visit starts here</h2><p>Your consultations will appear here after you start a doctor visit.</p><Link to="/" className="btn btn-primary">Start a doctor visit</Link></div> : <>
       <div className="consultation-count">{consultations.length} consultation{consultations.length === 1 ? '' : 's'} · Most recent first</div>
-      <div className="consultation-list">{consultations.map((item) => {
+       <div className="consultation-list">{consultations.map((item, index) => {
         const details = item.details;
         const ordered = details.diagnostic_orders.length;
-        return <button key={item.id} type="button" className="consultation-card" onClick={() => setParams({ consultation: details.encounter_id })} aria-label={`View consultation with ${details.doctor?.name || 'Doctor'} on ${date(item.timestamp)}`}>
+         return <button key={item.id} type="button" className="consultation-card" style={{ '--timeline-delay': `${Math.min(index * 90, 540)}ms` }} onClick={() => setParams({ consultation: details.encounter_id })} aria-label={`View consultation with ${details.doctor?.name || 'Doctor'} on ${date(item.timestamp)}`}>
           <span className="consultation-date"><strong>{new Date(item.timestamp).getDate()}</strong><span>{new Date(item.timestamp).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span></span>
           <span className="consultation-card-main"><span className="consultation-card-top"><strong>{details.doctor?.name || 'Doctor unavailable'}</strong><span className={`consultation-status ${details.status === 'OPEN' ? 'is-open' : ''}`}>{details.status === 'CLOSED' ? 'Completed' : 'Open'}</span></span>
             <span className="consultation-muted"><Building2 size={14} />{details.doctor?.clinic_name || 'Clinic not recorded'}</span>

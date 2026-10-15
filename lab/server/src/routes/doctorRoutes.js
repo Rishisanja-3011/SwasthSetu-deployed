@@ -9,11 +9,13 @@ const {
   ConsultationNote,
   DiagnosticOrder,
   DiagnosticReport,
+  ReportFile,
   LabObservation,
   AuditEvent,
   Notification,
 } = require('../models');
 const { requireAuth, requireRole } = require('../middleware/requireAuth');
+const { downloadOriginalPdf } = require('../services/reportFiles');
 
 const router = express.Router();
 
@@ -371,6 +373,84 @@ router.get('/encounter/:encounterId/cockpit', async (req, res) => {
   } catch (error) {
     console.error('Doctor cockpit error:', error);
     return res.status(500).json({ success: false, error: 'DOCTOR_COCKPIT_FAILED' });
+  }
+});
+
+router.get('/encounter/:encounterId/reports/:reportId/original', async (req, res) => {
+  try {
+    const encounter = await ownedEncounter(req, res);
+    if (!encounter) return undefined;
+    if (encounter.status === 'CLOSED') {
+      await audit(req, encounter, 'HISTORICAL_REPORT_ACCESS_DENIED_CLOSED_ENCOUNTER', 'DENIED', {
+        report_id: req.params.reportId,
+      });
+      return res.status(403).json({
+        success: false,
+        error: 'BOUNDED_ACCESS_EXPIRED',
+        status: 'CLOSED',
+        ended_at: encounter.ended_at,
+      });
+    }
+    if (encounter.visit_type !== 'REVISITING') {
+      return res.status(403).json({ success: false, error: 'REVISITING_CONSULTATION_REQUIRED' });
+    }
+    if (encounter.queue_status === 'INTAKE_PENDING') {
+      return res.status(409).json({ success: false, error: 'INTAKE_NOT_CONFIRMED' });
+    }
+    if (!isValidObjectId(req.params.reportId)) {
+      return res.status(404).json({ success: false, error: 'PUBLISHED_REPORT_NOT_FOUND' });
+    }
+
+    const report = await DiagnosticReport.findOne({
+      _id: req.params.reportId,
+      patient_id: encounter.patient_id._id,
+      status: 'PUBLISHED',
+    });
+    if (!report || !report.diagnostic_order_id) {
+      return res.status(404).json({ success: false, error: 'PUBLISHED_REPORT_NOT_FOUND' });
+    }
+
+    // A report is usable here only when its diagnostic order belongs to this
+    // doctor and patient. If the order points at an encounter, that encounter
+    // must also belong to the same doctor and patient; this prevents a doctor
+    // from guessing a report id from another patient's history.
+    const order = await DiagnosticOrder.findOne({
+      _id: report.diagnostic_order_id,
+      patient_id: encounter.patient_id._id,
+      doctor_id: req.doctor._id,
+    });
+    if (!order) return res.status(404).json({ success: false, error: 'PUBLISHED_REPORT_NOT_FOUND' });
+    if (order.encounter_id) {
+      const sourceEncounter = await Encounter.findOne({
+        _id: order.encounter_id,
+        patient_id: encounter.patient_id._id,
+        doctor_id: req.doctor._id,
+      }).select('_id');
+      if (!sourceEncounter) return res.status(404).json({ success: false, error: 'PUBLISHED_REPORT_NOT_FOUND' });
+    }
+
+    const originalFile = await ReportFile.findOne({ report_id: report._id });
+    if (!originalFile) return res.status(404).json({ success: false, error: 'ORIGINAL_REPORT_FILE_NOT_FOUND' });
+
+    await AuditEvent.create({
+      actor_type: 'DOCTOR',
+      actor_id: req.doctor._id.toString(),
+      action: 'DOCTOR_DOWNLOADED_PUBLISHED_REPORT_ORIGINAL',
+      resource_type: 'DiagnosticReport',
+      resource_id: report._id.toString(),
+      patient_id: encounter.patient_id._id,
+      outcome: 'SUCCESS',
+      details: {
+        encounter_id: encounter._id.toString(),
+        diagnostic_order_id: order._id.toString(),
+        visit_type: encounter.visit_type,
+      },
+    });
+
+    return downloadOriginalPdf(res, originalFile);
+  } catch (error) {
+    console.error('Doctor original report download error:', error);
+    return res.status(500).json({ success: false, error: 'ORIGINAL_REPORT_DOWNLOAD_FAILED' });
   }
 });
 
