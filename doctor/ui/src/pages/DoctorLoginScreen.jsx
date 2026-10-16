@@ -16,7 +16,7 @@ export const DoctorLoginScreen = () => {
 
   const { login, register, loading, error } = useDoctorAuth();
   const navigate = useNavigate();
-  const publicSite = `${(import.meta.env.VITE_LANDING_APP_URL || 'http://localhost:5174').replace(/\/$/, '')}/`;
+  const publicSite = `${(import.meta.env.VITE_LANDING_APP_URL || 'https://vaani-doc-home-page.vercel.app').replace(/\/$/, '')}/`;
 
   const handleLogin = async (e) => {
     e.preventDefault();

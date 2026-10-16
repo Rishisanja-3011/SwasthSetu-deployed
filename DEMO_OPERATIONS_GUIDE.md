@@ -27,14 +27,16 @@ port `5174`; doctor and laboratory login screens link to that standalone app. Fo
 deployed origins, set these frontend build variables:
 
 ```env
-VITE_PATIENT_APP_URL=https://patient.example.com
-VITE_DOCTOR_APP_URL=https://doctor.example.com
-VITE_LAB_APP_URL=https://lab.example.com
-VITE_LANDING_APP_URL=https://www.example.com
+VITE_PATIENT_APP_URL=https://swasth-setu-xi.vercel.app
+VITE_DOCTOR_APP_URL=https://swasth-setu-56yj.vercel.app
+VITE_LAB_APP_URL=https://swasth-setu-7fma.vercel.app
+VITE_LANDING_APP_URL=https://vaani-doc-home-page.vercel.app
 ```
 
 `VITE_PATIENT_APP_URL` is embedded into doctor and laboratory QR codes. Do not
-use a localhost fallback in a production build.
+use a localhost fallback in a production build. QR links use the secure
+patient flow: `/scan/doctor/DOC-DEMO01` or `/scan/lab/LAB-DEMO01`, then patient
+login (if needed), provider confirmation/permission, and symptom intake.
 
 ## 2. One-time setup
 

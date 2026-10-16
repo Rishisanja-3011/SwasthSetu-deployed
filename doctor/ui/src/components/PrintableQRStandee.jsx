@@ -1,14 +1,14 @@
 import React from 'react';
 import { Printer, Download, Sparkles, MapPin, CheckCircle, Shield } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { patientScanConfigMessage, patientScanUrl } from '../utils/patientScanUrl';
 
 export const PrintableQRStandee = ({ doctor }) => {
   const doctorName = doctor?.name || 'Dr. Ramesh Mehta';
-  const doctorCode = doctor?.doctor_code || doctor?.qr_code_id || 'DOC-409';
+  const doctorCode = doctor?.doctor_code || doctor?.qr_code_id || 'DOC-DEMO01';
   const clinicName = doctor?.clinic_name || 'Mehta Community Health Clinic';
   const specialty = doctor?.specialty || 'General Physician & Family Medicine';
-  const patientOrigin = import.meta.env.VITE_PATIENT_APP_URL || 'http://localhost:5176';
-  const scanUrl = `${patientOrigin.replace(/\/$/, '')}/scan/doctor/${encodeURIComponent(doctorCode)}`;
+  const scanUrl = patientScanUrl('doctor', doctorCode);
 
   const handlePrint = () => {
     window.print();
@@ -103,9 +103,17 @@ export const PrintableQRStandee = ({ doctor }) => {
           border: '2px solid var(--slate-200)',
           boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
         }}>
-          <QRCodeSVG value={scanUrl} size={208} bgColor="#ffffff" fgColor="#0a2540" level="H" includeMargin />
+          {scanUrl ? (
+            <QRCodeSVG value={scanUrl} size={208} bgColor="#ffffff" fgColor="#0a2540" level="H" includeMargin />
+          ) : (
+            <div style={{ minHeight: 208, display: 'grid', placeItems: 'center', padding: 20, color: '#b45309', background: '#fffbeb', borderRadius: 10, fontSize: '0.82rem', fontWeight: 700 }}>
+              {patientScanConfigMessage()}
+            </div>
+          )}
         </div>
-        <div style={{ marginBottom: 16, fontSize: '0.72rem', color: 'var(--slate-500)', wordBreak: 'break-all' }}>{scanUrl}</div>
+        <div style={{ marginBottom: 16, fontSize: '0.72rem', color: scanUrl ? 'var(--slate-500)' : '#b45309', wordBreak: 'break-word' }}>
+          {scanUrl || patientScanConfigMessage()}
+        </div>
 
         {/* Scan Callout */}
         <div style={{

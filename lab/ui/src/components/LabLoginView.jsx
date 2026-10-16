@@ -12,7 +12,7 @@ export default function LabLoginView({ onLogin, onRegister, lab }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isRegistering = mode === 'register';
-  const publicSite = `${(import.meta.env.VITE_LANDING_APP_URL || 'http://localhost:5174').replace(/\/$/, '')}/`;
+  const publicSite = `${(import.meta.env.VITE_LANDING_APP_URL || 'https://vaani-doc-home-page.vercel.app').replace(/\/$/, '')}/`;
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrorMessage('');

@@ -29,10 +29,13 @@ class GeminiService:
             "Answer the latest question directly and concisely."
         )
         response = self._client().models.generate_content(
-            model="gemini-flash-latest",
+            model=settings.gemini_model,
             contents=prompt,
         )
         answer = clean_response(response.text)
         if not answer:
             raise RuntimeError("MediBot returned an empty response.")
         return answer
+
+
+gemini_service = GeminiService()

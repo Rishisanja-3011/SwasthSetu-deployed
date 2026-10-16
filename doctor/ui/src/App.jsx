@@ -2,12 +2,12 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { DoctorAuthProvider, useDoctorAuth } from './context/DoctorAuthContext';
 import { DoctorNavbar } from './components/DoctorNavbar';
+import { DoctorSidebar } from './components/DoctorSidebar';
 import { DoctorLoginScreen } from './pages/DoctorLoginScreen';
 import { DoctorQueueScreen } from './pages/DoctorQueueScreen';
 import { ClinicalCockpitScreen } from './pages/ClinicalCockpitScreen';
 import { DoctorQRScreen } from './pages/DoctorQRScreen';
 
-// Full-Width Clean Clinical Layout Shell (No Sidebar)
 const DoctorLayout = ({ children }) => {
   const { doctor, authLoading } = useDoctorAuth();
 
@@ -20,13 +20,14 @@ const DoctorLayout = ({ children }) => {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'var(--bg-page)' }}>
-      <DoctorNavbar />
-      <main className="main-wrapper" style={{ width: '100%' }}>
-        <div className="content-area">
+    <div className="app-layout">
+      <DoctorSidebar />
+      <div className="main-wrapper">
+        <DoctorNavbar />
+        <main className="content-area">
           {children}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

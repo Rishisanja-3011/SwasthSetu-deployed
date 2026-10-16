@@ -227,7 +227,7 @@ export const DoctorQueueScreen = () => {
               No Patients Currently in Queue
             </h4>
             <p style={{ fontSize: '0.86rem', color: 'var(--slate-500)', maxWidth: 420, margin: '0 auto 18px auto' }}>
-              Your queue is clear. When patients scan your doctor QR standee ({doctor?.doctor_code || 'DOC-409'}) and check in, they will appear here automatically.
+              Your queue is clear. When patients scan your doctor QR standee ({doctor?.doctor_code || 'DOC-DEMO01'}) and complete the consent and check-in flow, they will appear here automatically.
             </p>
           </div>
         )}

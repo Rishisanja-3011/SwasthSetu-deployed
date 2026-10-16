@@ -20,7 +20,7 @@ export function ProviderScanScreen() {
         replace: true,
         state: {
           pendingProviderCode: providerCode,
-          returnTo: location.pathname,
+          returnTo: `${location.pathname}${location.search}`,
         },
       });
       return;

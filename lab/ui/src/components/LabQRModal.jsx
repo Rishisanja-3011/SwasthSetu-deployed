@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { QrCode, UserPlus, RefreshCw, X, ShieldCheck, Printer, Check, Download } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { patientScanConfigMessage, patientScanUrl } from '../utils/patientScanUrl';
 
 export default function LabQRModal({
   isOpen,
@@ -12,6 +13,9 @@ export default function LabQRModal({
   const [selectedPreset, setSelectedPreset] = useState('ananya');
 
   if (!isOpen) return null;
+
+  const labCode = lab?.qr_code_id || 'LAB-DEMO01';
+  const scanUrl = patientScanUrl('lab', labCode);
 
   const presets = [
     {
@@ -40,6 +44,7 @@ export default function LabQRModal({
   };
 
   const downloadQr = () => {
+    if (!scanUrl) return;
     const svg = document.getElementById('lab-walk-in-qr-svg');
     if (!svg) return;
     const source = new XMLSerializer().serializeToString(svg);
@@ -109,14 +114,20 @@ export default function LabQRModal({
             </p>
 
             <div className="qr-matrix-box">
-              <QRCodeSVG id="lab-walk-in-qr-svg" value={`${(import.meta.env.VITE_PATIENT_APP_URL || 'http://localhost:5176').replace(/\/$/, '')}/scan/laboratory/${encodeURIComponent(lab?.qr_code_id || '')}`} size={130} bgColor="#f8fafc" fgColor="#0f172a" level="H" includeMargin />
+              {scanUrl ? (
+                <QRCodeSVG id="lab-walk-in-qr-svg" value={scanUrl} size={130} bgColor="#f8fafc" fgColor="#0f172a" level="H" includeMargin />
+              ) : (
+                <div style={{ width: 130, minHeight: 130, display: 'grid', placeItems: 'center', padding: 12, color: '#b45309', background: '#fffbeb', borderRadius: 10, fontSize: '0.7rem', fontWeight: 700, textAlign: 'center' }}>
+                  {patientScanConfigMessage()}
+                </div>
+              )}
 
               <div style={{ marginTop: '0.75rem' }}>
-                <span className="qr-code-pill">{lab?.qr_code_id || 'ID unavailable'}</span>
+               <span className="qr-code-pill">{labCode}</span>
               </div>
               <button type="button" className="btn-clinical outline" onClick={downloadQr} style={{ marginTop: '0.65rem' }}><Download size={14} /> Download QR (PNG)</button>
-              <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.4rem' }}>
-                Patient scan code: <strong>{lab?.qr_code_id || 'ID unavailable'}</strong>
+               <div style={{ fontSize: '0.72rem', color: scanUrl ? '#64748b' : '#b45309', marginTop: '0.4rem', wordBreak: 'break-word' }}>
+                 {scanUrl ? <>Patient scan URL: <strong>{scanUrl}</strong></> : patientScanConfigMessage()}
               </div>
             </div>
           </div>

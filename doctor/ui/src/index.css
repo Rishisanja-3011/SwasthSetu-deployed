@@ -18,12 +18,15 @@
 
   /* Clinical Blue */
   --blue-50: #eff6ff;
-  --blue-100: #dbeafe;
-  --blue-200: #bfdbfe;
-  --blue-500: #3b82f6;
-  --blue-600: #1d4ed8; /* Primary Action CTA */
-  --blue-700: #1e40af;
-  --blue-900: #1e3a8a;
+   --blue-100: #dbeafe;
+   --blue-200: #bfdbfe;
+   --blue-300: #93c5fd;
+   --blue-400: #60a5fa;
+   --blue-500: #3b82f6;
+   --blue-600: #1d4ed8; /* Primary Action CTA */
+   --blue-700: #1e40af;
+   --blue-800: #1e3a8a;
+   --blue-900: #1e3a8a;
 
   /* Neutrals & Surfaces */
   --navy-950: #051329;
@@ -129,6 +132,21 @@ body {
   max-width: 1540px;
   width: 100%;
   margin: 0 auto;
+}
+
+.doctor-sidebar {
+  flex: 0 0 250px;
+  min-height: 100vh;
+}
+
+@media (max-width: 900px) {
+  .doctor-sidebar {
+    display: none;
+  }
+
+  .content-area {
+    padding: 20px 16px;
+  }
 }
 
 /* Card Styles */

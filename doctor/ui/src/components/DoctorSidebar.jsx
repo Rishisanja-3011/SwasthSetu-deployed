@@ -8,7 +8,7 @@ export const DoctorSidebar = () => {
   const waitingCount = queue.filter(q => q.status === 'OPEN').length;
 
   return (
-    <aside style={{
+    <aside className="doctor-sidebar" style={{
       width: 250,
       backgroundColor: '#ffffff',
       borderRight: '1px solid var(--border-subtle)',

@@ -1,12 +1,14 @@
 import React from 'react';
 import { Building2, X, ShieldCheck, Award, MapPin, Phone, Hash, Download } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { patientScanConfigMessage, patientScanUrl } from '../utils/patientScanUrl';
 
 export default function LabProfileModal({ isOpen, onClose, lab }) {
   if (!isOpen) return null;
-  const patientOrigin = import.meta.env.VITE_PATIENT_APP_URL || 'http://localhost:5176';
-  const scanUrl = `${patientOrigin.replace(/\/$/, '')}/scan/laboratory/${encodeURIComponent(lab?.qr_code_id || '')}`;
+  const labCode = lab?.qr_code_id || 'LAB-DEMO01';
+  const scanUrl = patientScanUrl('lab', labCode);
   const downloadQr = () => {
+    if (!scanUrl) return;
     const svg = document.getElementById('lab-profile-qr-svg');
     if (!svg) return;
     const source = new XMLSerializer().serializeToString(svg);
@@ -57,15 +59,21 @@ export default function LabProfileModal({ isOpen, onClose, lab }) {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '1.15rem', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', background: 'var(--surface-raised)', boxShadow: 'var(--neo-raised-sm)' }}>
-            <QRCodeSVG id="lab-profile-qr-svg" value={scanUrl} size={112} bgColor="#ffffff" fgColor="#1A2D35" level="H" includeMargin />
+             {scanUrl ? (
+               <QRCodeSVG id="lab-profile-qr-svg" value={scanUrl} size={112} bgColor="#ffffff" fgColor="#1A2D35" level="H" includeMargin />
+             ) : (
+               <div style={{ width: 112, minHeight: 112, display: 'grid', placeItems: 'center', padding: 10, color: '#b45309', background: '#fffbeb', borderRadius: 10, fontSize: '0.7rem', fontWeight: 700, textAlign: 'center' }}>
+                 Configure patient app URL
+               </div>
+             )}
             <div>
               <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--hospital-blue)', fontWeight: 700 }}>Patient scan QR</div>
               <p style={{ fontSize: '0.78rem', color: 'var(--muted-text)', marginTop: '0.3rem', lineHeight: 1.4 }}>Patients can scan this code to identify your facility and approve a bounded lab access grant.</p>
               <div style={{ marginTop: '0.5rem', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.85rem', color: 'var(--hospital-blue)' }}>{lab?.qr_code_id || 'ID unavailable'}</div>
-              <div style={{ marginTop: '0.25rem', fontSize: '0.68rem', color: 'var(--muted-text)', wordBreak: 'break-all' }}>{scanUrl}</div>
+               <div style={{ marginTop: '0.25rem', fontSize: '0.68rem', color: scanUrl ? 'var(--muted-text)' : '#b45309', wordBreak: 'break-word' }}>{scanUrl || patientScanConfigMessage()}</div>
             </div>
           </div>
-          <button type="button" className="btn-clinical outline" onClick={downloadQr} style={{ width: '100%', justifyContent: 'center' }}><Download size={15} /> Download laboratory QR (PNG)</button>
+          <button type="button" className="btn-clinical outline" onClick={downloadQr} disabled={!scanUrl} title={!scanUrl ? patientScanConfigMessage() : undefined} style={{ width: '100%', justifyContent: 'center' }}><Download size={15} /> Download laboratory QR (PNG)</button>
 
           {/* Details Grid */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>

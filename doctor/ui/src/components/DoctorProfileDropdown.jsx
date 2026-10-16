@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Copy, Check, Download, Shield, Sparkles, Building, UserCheck } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useDoctorAuth } from '../context/DoctorAuthContext';
+import { patientScanConfigMessage, patientScanUrl } from '../utils/patientScanUrl';
 
 export const DoctorProfileDropdown = ({ isOpen, onClose }) => {
   const { doctor } = useDoctorAuth();
@@ -9,12 +10,11 @@ export const DoctorProfileDropdown = ({ isOpen, onClose }) => {
   const dropdownRef = useRef(null);
 
   const doctorName = doctor?.name || 'Dr. Ramesh Mehta';
-  const doctorCode = doctor?.doctor_code || doctor?.qr_code_id || 'DOC-409';
+  const doctorCode = doctor?.doctor_code || doctor?.qr_code_id || 'DOC-DEMO01';
   const specialty = doctor?.specialty || 'General Physician & Family Medicine';
   const clinicName = doctor?.clinic_name || 'Mehta Community Health Clinic';
   const initial = doctorName.replace('Dr. ', '').charAt(0) || 'D';
-  const patientOrigin = import.meta.env.VITE_PATIENT_APP_URL || 'http://localhost:5176';
-  const scanUrl = `${patientOrigin.replace(/\/$/, '')}/scan/doctor/${encodeURIComponent(doctorCode)}`;
+  const scanUrl = patientScanUrl('doctor', doctorCode);
 
   // Click outside listener
   useEffect(() => {
@@ -40,6 +40,7 @@ export const DoctorProfileDropdown = ({ isOpen, onClose }) => {
   };
 
   const handleDownloadQR = () => {
+    if (!scanUrl) return;
     const svgEl = document.getElementById('doctor-profile-qr-svg');
     if (!svgEl) return;
 
@@ -247,7 +248,13 @@ export const DoctorProfileDropdown = ({ isOpen, onClose }) => {
             maxWidth: 160,
             margin: '0 auto 10px auto',
           }}>
-             <QRCodeSVG id="doctor-profile-qr-svg" value={scanUrl} size={160} bgColor="#ffffff" fgColor="#0a2540" level="H" includeMargin />
+             {scanUrl ? (
+               <QRCodeSVG id="doctor-profile-qr-svg" value={scanUrl} size={160} bgColor="#ffffff" fgColor="#0a2540" level="H" includeMargin />
+             ) : (
+               <div style={{ minHeight: 160, display: 'grid', placeItems: 'center', padding: 18, color: '#b45309', background: '#fffbeb', borderRadius: 10, fontSize: '0.78rem', fontWeight: 700 }}>
+                 {patientScanConfigMessage()}
+               </div>
+             )}
           </div>
 
           <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--navy-900)' }}>
@@ -256,7 +263,9 @@ export const DoctorProfileDropdown = ({ isOpen, onClose }) => {
            <div style={{ fontSize: '0.74rem', color: 'var(--slate-500)', marginTop: 2 }}>
              Patients scan this QR to join your consultation queue
            </div>
-           <div style={{ fontSize: '0.67rem', color: 'var(--slate-400)', marginTop: 5, wordBreak: 'break-all' }}>{scanUrl}</div>
+           <div style={{ fontSize: '0.67rem', color: scanUrl ? 'var(--slate-400)' : '#b45309', marginTop: 5, wordBreak: 'break-word' }}>
+             {scanUrl || patientScanConfigMessage()}
+           </div>
         </div>
 
         {/* Download Clinic QR Action Button */}
@@ -270,7 +279,8 @@ export const DoctorProfileDropdown = ({ isOpen, onClose }) => {
             marginBottom: 10,
             cursor: 'pointer',
           }}
-          title={`Download doctor QR code as doctor-qr-${doctorCode}.png`}
+           title={scanUrl ? `Download doctor QR code as doctor-qr-${doctorCode}.png` : patientScanConfigMessage()}
+           disabled={!scanUrl}
         >
           <Download size={15} color="var(--navy-900)" />
           <span>Download Clinic QR</span>
