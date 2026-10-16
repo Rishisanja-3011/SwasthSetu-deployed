@@ -13,10 +13,17 @@ router = APIRouter()
 @router.post("/chat", response_model=ApiResponse)
 def chat(request: ChatRequest):
     try:
-        # Preserve the existing Groq preference when it is configured, while
-        # allowing a deployment with only GEMINI_API_KEY to run the same UI.
-        provider = groq_service if settings.groq_api_key else gemini_service
-        answer = provider.generate_response(request.question, request.history)
+        # Prefer Groq when configured, but fall back to Gemini so one expired
+        # or misconfigured provider does not take the deployed demo offline.
+        if settings.groq_api_key:
+            try:
+                answer = groq_service.generate_response(request.question, request.history)
+            except Exception:
+                if not settings.gemini_api_key:
+                    raise
+                answer = gemini_service.generate_response(request.question, request.history)
+        else:
+            answer = gemini_service.generate_response(request.question, request.history)
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
 
